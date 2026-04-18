@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DNA_TYPES, getDNAStrings } from "@/lib/dna";
 import TopBackButton from "@/components/TopBackButton";
 import { useLanguage } from "@/lib/LanguageContext";
 
 export default function ResultPage() {
+  return (
+    <Suspense>
+      <ResultPageInner />
+    </Suspense>
+  );
+}
+
+function ResultPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { lang, t } = useLanguage();
