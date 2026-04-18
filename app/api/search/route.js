@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rateLimitSearch } from "@/lib/rateLimit";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -24,6 +25,14 @@ function toPosterUrl(path) {
 }
 
 export async function GET(request) {
+  const { allowed } = rateLimitSearch(request);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get("q") || "").trim();

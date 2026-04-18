@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { DNA_TYPES, computeDNA, getDNAStrings } from "@/lib/dna";
 import { searchFilm, getFilmById, buildCandidatePool, getWatchOptionsForCountry } from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
+import { rateLimitRecommend } from "@/lib/rateLimit";
 
 // In-memory cache of candidate pools.
 // Key: `${dnaKey}_${yearFrom}_${yearTo}`
@@ -38,6 +39,14 @@ async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo) {
 }
 
 export async function POST(request) {
+  const { allowed } = rateLimitRecommend(request);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a few minutes." },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
     const films = Array.isArray(body?.films) ? body.films : [];

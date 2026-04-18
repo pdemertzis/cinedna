@@ -3,6 +3,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/lib/LanguageContext";
 import AppNavbar from "@/components/AppNavbar";
 import { Analytics } from "@vercel/analytics/react";
+import AppFooter from "@/components/AppFooter";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
         <LanguageProvider>
           <AppNavbar />
           <div style={{ paddingTop: "56px", minHeight: "100vh" }}>{children}</div>
+          <AppFooter />
           <Analytics />
         </LanguageProvider>
       </body>
