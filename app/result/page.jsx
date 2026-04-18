@@ -516,6 +516,30 @@ function ResultPageInner() {
             {t.profile_tab}
           </button>
         </div>
+
+        <div style={{ marginTop: "40px", paddingTop: "24px", borderTop: "1px solid var(--br)" }}>
+          <a
+            href="https://forms.gle/UmJXTXYnsZUbsCoZ9"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              color: "var(--mu)",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "11px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+              borderBottom: "1px solid var(--br)",
+              paddingBottom: "2px",
+              transition: "color 0.15s",
+            }}
+            onMouseEnter={e => e.target.style.color = "var(--go)"}
+            onMouseLeave={e => e.target.style.color = "var(--mu)"}
+          >
+            {lang === "el" ? "Πες μας τη γνώμη σου →" : "Share your feedback →"}
+          </a>
+        </div>
       </section>
 
       <style jsx>{`
