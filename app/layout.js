@@ -17,6 +17,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://cinedna-pi.vercel.app"),
   title: "CineDNA — Ανακάλυψε το κινηματογραφικό σου DNA",
   description: "Βάλε 3 ταινίες που αγαπάς και ανακάλυψε το κινηματογραφικό σου DNA. Προσωποποιημένες προτάσεις ταινιών που δεν θα έβρισκες μόνος σου.",
   openGraph: {
@@ -28,7 +29,7 @@ export const metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "CineDNA",
     description: "Βάλε 3 ταινίες που αγαπάς και ανακάλυψε το κινηματογραφικό σου DNA.",
   },
