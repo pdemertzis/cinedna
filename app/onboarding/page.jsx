@@ -18,14 +18,18 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedFilmTitles = useMemo(
-    () => films.map((film) => film.title.trim()).filter(Boolean),
+  const selectedFilms = useMemo(
+    () => films.filter((film) => film.id && film.title.trim()),
     [films],
   );
+  const selectedFilmTitles = useMemo(
+    () => selectedFilms.map((film) => film.title.trim()),
+    [selectedFilms],
+  );
 
-  const canGoStep2 = selectedFilmTitles.length >= 1;
+  const canGoStep2 = selectedFilms.length >= 3;
   const canGoStep3 = Boolean(mood);
-  const canSubmit = Boolean(era) && selectedFilmTitles.length >= 1;
+  const canSubmit = Boolean(era) && selectedFilms.length >= 3;
 
   const updateFilm = (index, film) => {
     setFilms((prev) => prev.map((item, i) => (i === index ? { id: film.id, title: film.title } : item)));
@@ -142,6 +146,17 @@ export default function OnboardingPage() {
                 <FilmInput key={index} index={index} value={film} onSelect={updateFilm} placeholder={t.step1_placeholder} />
               ))}
             </div>
+
+            <p style={{
+              marginTop: "12px",
+              marginBottom: 0,
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "11px",
+              color: canGoStep2 ? "var(--go)" : "var(--mu)",
+              letterSpacing: "0.05em",
+            }}>
+              {selectedFilms.length} / 3 {lang === "en" ? "selected from search" : "επιλεγμένες από αναζήτηση"}
+            </p>
 
             <button
               type="button"

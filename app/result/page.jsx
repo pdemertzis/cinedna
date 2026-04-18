@@ -23,6 +23,7 @@ function ResultPageInner() {
   const [historyIndex, setHistoryIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const normalizeHistoryEntry = (entry = {}) => {
     const film = entry?.film || {};
@@ -78,6 +79,26 @@ function ResultPageInner() {
     if (!result?.dnaKey) return { name: result?.dnaName || "", desc: result?.dnaDesc || "" };
     return getDNAStrings(result.dnaKey, lang);
   }, [result?.dnaKey, result?.dnaName, result?.dnaDesc, lang]);
+
+  const handleShare = async () => {
+    const text = lang === "en"
+      ? `My cinematic DNA is "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`
+      : `Το κινηματογραφικό μου DNA είναι "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`;
+    const ogParams = new URLSearchParams({ dna: result.dnaKey || "d", lang, film: result.film?.title || "" });
+    const url = `https://cinedna-pi.vercel.app?og=${ogParams.toString()}`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "CineDNA", text, url: "https://cinedna-pi.vercel.app" });
+      } catch {
+        // user cancelled — do nothing
+      }
+    } else {
+      await navigator.clipboard.writeText(`${text}\nhttps://cinedna-pi.vercel.app`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const rerollRecommendation = async () => {
     if (!result || historyIndex !== null) return;
@@ -514,6 +535,25 @@ function ResultPageInner() {
             }}
           >
             {t.profile_tab}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShare}
+            className="btn-secondary"
+            style={{
+              borderRadius: "999px",
+              padding: "12px 18px",
+              cursor: "pointer",
+              fontFamily: "var(--font-label)",
+              fontSize: "12px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}
+          >
+            {copied
+              ? (lang === "en" ? "Copied!" : "Αντιγράφηκε!")
+              : (lang === "en" ? "Share" : "Κοινοποίηση")}
           </button>
         </div>
 
