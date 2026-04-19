@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 
-export default function FilmInput({ index = 0, value, onSelect, placeholder = "" }) {
+export default function FilmInput({ index = 0, value, onSelect, placeholder = "", optional = false }) {
   const { t } = useLanguage();
   const [query, setQuery] = useState(value?.title || "");
   const [results, setResults] = useState([]);
@@ -118,13 +118,19 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
 
   const isConfirmed = Boolean(value?.id);
 
+  const inputBorder = isConfirmed
+    ? "1px solid var(--go)"
+    : optional
+    ? "1px dashed #3a3a3a"
+    : "1px solid var(--br)";
+
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <label
         style={{
           display: "block",
           marginBottom: "8px",
-          color: isConfirmed ? "var(--go)" : "var(--mu)",
+          color: isConfirmed ? "var(--go)" : optional ? "#555" : "var(--mu)",
           fontFamily: "var(--font-dm-mono), monospace",
           fontSize: "12px",
           letterSpacing: "0.06em",
@@ -143,7 +149,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
         placeholder={placeholder || t.step1_placeholder}
         style={{
           width: "100%",
-          border: isConfirmed ? "1px solid var(--go)" : "1px solid var(--br)",
+          border: inputBorder,
           background: "var(--sf)",
           color: "var(--cr)",
           borderRadius: "12px",

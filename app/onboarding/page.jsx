@@ -12,7 +12,6 @@ export default function OnboardingPage() {
   const { lang, t } = useLanguage();
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [filmCount, setFilmCount] = useState(3);
   const [films, setFilms] = useState(Array.from({ length: 5 }, () => ({ id: null, title: "" })));
   const [mood, setMood] = useState("");
   const [era, setEra] = useState("");
@@ -152,48 +151,17 @@ export default function OnboardingPage() {
               {t.step1_sub}
             </p>
             <div style={{ display: "grid", gap: "14px" }}>
-              {films.slice(0, filmCount).map((film, index) => (
-                <div key={index}>
-                  {index === 3 && (
-                    <p style={{
-                      margin: "6px 0 10px",
-                      fontFamily: "var(--font-dm-mono), monospace",
-                      fontSize: "11px",
-                      color: "var(--mu)",
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
-                    }}>
-                      {t.film_optional}
-                    </p>
-                  )}
-                  <FilmInput index={index} value={film} onSelect={updateFilm} placeholder={t.step1_placeholder} />
-                </div>
+              {films.map((film, index) => (
+                <FilmInput
+                  key={index}
+                  index={index}
+                  value={film}
+                  onSelect={updateFilm}
+                  placeholder={t.step1_placeholder}
+                  optional={index >= 3}
+                />
               ))}
             </div>
-
-            {filmCount < 5 && (
-              <button
-                type="button"
-                onClick={() => setFilmCount(c => c + 1)}
-                style={{
-                  marginTop: "12px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm-mono), monospace",
-                  fontSize: "11px",
-                  letterSpacing: "0.06em",
-                  color: "var(--mu)",
-                  padding: 0,
-                  textTransform: "uppercase",
-                  transition: "color 160ms ease",
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = "var(--cr)"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--mu)"}
-              >
-                {t.add_film}
-              </button>
-            )}
 
             <p style={{
               marginTop: "12px",
