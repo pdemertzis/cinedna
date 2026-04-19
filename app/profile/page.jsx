@@ -313,16 +313,16 @@ export default function ProfilePage() {
                     background: "var(--bk)",
                     padding: "10px 12px",
                     display: "grid",
-                    gridTemplateColumns: "58px 1fr",
-                    gap: "10px",
+                    gridTemplateColumns: "80px 1fr",
+                    gap: "12px",
                     textAlign: "left",
                     cursor: "pointer",
                   }}
                 >
                   <div
                     style={{
-                      width: "58px",
-                      height: "82px",
+                      width: "80px",
+                      height: "112px",
                       borderRadius: "8px",
                       overflow: "hidden",
                       border: "1px solid var(--br)",

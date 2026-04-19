@@ -220,9 +220,9 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
             >
               <div
                 style={{
-                  width: "40px",
-                  height: "56px",
-                  borderRadius: "6px",
+                  width: "64px",
+                  height: "90px",
+                  borderRadius: "8px",
                   background: "var(--bk)",
                   border: "1px solid var(--br)",
                   overflow: "hidden",
@@ -238,12 +238,14 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
                 ) : null}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: "18px", fontFamily: "var(--font-cormorant), serif" }}>{movie.title}</div>
+                <div style={{ fontSize: "19px", fontFamily: "var(--font-cormorant), serif", lineHeight: 1.2 }}>{movie.title}</div>
                 <div
                   style={{
-                    fontSize: "12px",
-                    color: "var(--mu)",
+                    marginTop: "5px",
+                    fontSize: "13px",
+                    color: "var(--go)",
                     fontFamily: "var(--font-dm-mono), monospace",
+                    letterSpacing: "0.04em",
                   }}
                 >
                   {movie.year || "----"}
