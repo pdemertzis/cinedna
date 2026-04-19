@@ -6,13 +6,13 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 const HOW_STEPS = {
   el: [
-    { n: "01", title: "Επιλέγεις τρεις ταινίες", desc: "Όχι τις αγαπημένες — αυτές που άφησαν σημάδι. Τις αναζητάς από τη βάση του TMDB." },
+    { n: "01", title: "Επιλέγεις τρεις ταινίες (ή περισσότερες)", desc: "Τρεις τουλάχιστον — κάθε επιπλέον ταινία βελτιώνει την ακρίβεια του αποτελέσματος." },
     { n: "02", title: "Ορίζεις διάθεση και εποχή", desc: "Τι ψάχνεις απόψε; Ηρεμία, πρόκληση, απόδραση; Από ποια δεκαετία;" },
     { n: "03", title: "Ανακαλύπτεις το DNA σου", desc: "Ο αλγόριθμος αναλύει τα είδη και την αισθητική σου και βρίσκει τον κινηματογραφικό σου τύπο — από 12 διαφορετικά profiles." },
     { n: "04", title: "Παίρνεις μια σύσταση", desc: "Μια ταινία που δεν θα έβρισκες μόνος σου. Μπορείς να ζητάς νέες — μέχρι 50 — χωρίς να επαναλαμβάνεται καμία." },
   ],
   en: [
-    { n: "01", title: "Choose three films", desc: "Not your favourites — the ones that left a mark. Search from the TMDB database." },
+    { n: "01", title: "Choose three films (or more)", desc: "At least three — each additional film improves the accuracy of your result." },
     { n: "02", title: "Set your mood and era", desc: "What are you looking for tonight? Stillness, challenge, escape? Which decade speaks to you?" },
     { n: "03", title: "Discover your DNA", desc: "The algorithm analyses your aesthetic and genre patterns to find your cinematic type — one of 12 distinct profiles." },
     { n: "04", title: "Get a recommendation", desc: "One film you wouldn't have found on your own. Request new ones — up to 50 — with no repeats." },
