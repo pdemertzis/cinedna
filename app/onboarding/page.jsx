@@ -31,6 +31,11 @@ export default function OnboardingPage() {
   const canGoStep3 = Boolean(mood);
   const canSubmit = Boolean(era) && selectedFilms.length >= 3;
 
+  const goToStep = (n) => {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const updateFilm = (index, film) => {
     setFilms((prev) => prev.map((item, i) => (i === index ? { id: film.id, title: film.title } : item)));
   };
@@ -41,6 +46,7 @@ export default function OnboardingPage() {
     setStep(4);
     setLoading(true);
     setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
       const shownIds = JSON.parse(localStorage.getItem("cinedna:shownFilmIds") || "[]");
@@ -112,21 +118,24 @@ export default function OnboardingPage() {
     >
       <TopBackButton href="/" />
       <section style={{ width: "100%", maxWidth: "920px", margin: "0 auto" }}>
-        <div
-          style={{
-            marginBottom: "18px",
-            color: "var(--mu)",
-            fontFamily: "var(--font-dm-mono), monospace",
-            fontSize: "12px",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
-        >
-          {t.step_of} {step} / 4
-        </div>
+
+        {step < 4 && (
+          <div
+            style={{
+              marginBottom: "18px",
+              color: "var(--mu)",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "12px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            {t.step_of} {step} / 3
+          </div>
+        )}
 
         {step === 1 && (
-          <div>
+          <div key="step1" className="step-animate">
             <h1
               style={{
                 fontFamily: "var(--font-cormorant), serif",
@@ -154,6 +163,7 @@ export default function OnboardingPage() {
               fontSize: "11px",
               color: canGoStep2 ? "var(--go)" : "var(--mu)",
               letterSpacing: "0.05em",
+              transition: "color 200ms ease",
             }}>
               {selectedFilms.length} / 3 {lang === "en" ? "selected from search" : "επιλεγμένες από αναζήτηση"}
             </p>
@@ -161,7 +171,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               disabled={!canGoStep2}
-              onClick={() => setStep(2)}
+              onClick={() => goToStep(2)}
               className="btn-primary"
               style={{
                 marginTop: "24px",
@@ -181,7 +191,7 @@ export default function OnboardingPage() {
         )}
 
         {step === 2 && (
-          <div>
+          <div key="step2" className="step-animate">
             <h1
               style={{
                 fontFamily: "var(--font-cormorant), serif",
@@ -209,7 +219,7 @@ export default function OnboardingPage() {
             <div style={{ marginTop: "24px", display: "flex", gap: "10px" }}>
               <button
                 type="button"
-                onClick={() => setStep(1)}
+                onClick={() => goToStep(1)}
                 className="btn-secondary"
                 style={{
                   borderRadius: "999px",
@@ -223,7 +233,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 disabled={!canGoStep3}
-                onClick={() => setStep(3)}
+                onClick={() => goToStep(3)}
                 className="btn-primary"
                 style={{
                   borderRadius: "999px",
@@ -240,7 +250,7 @@ export default function OnboardingPage() {
         )}
 
         {step === 3 && (
-          <div>
+          <div key="step3" className="step-animate">
             <h1
               style={{
                 fontFamily: "var(--font-cormorant), serif",
@@ -262,7 +272,7 @@ export default function OnboardingPage() {
             <div style={{ marginTop: "24px", display: "flex", gap: "10px" }}>
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => goToStep(2)}
                 className="btn-secondary"
                 style={{
                   borderRadius: "999px",
@@ -331,7 +341,7 @@ export default function OnboardingPage() {
                 <p style={{ color: "#cf6c6c", marginBottom: "10px" }}>{error}</p>
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
+                  onClick={() => goToStep(3)}
                   className="btn-secondary"
                   style={{
                     borderRadius: "999px",
@@ -350,9 +360,7 @@ export default function OnboardingPage() {
 
       <style jsx>{`
         @keyframes cinednaSpin {
-          to {
-            transform: rotate(360deg);
-          }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </main>

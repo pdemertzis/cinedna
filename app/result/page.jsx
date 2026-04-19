@@ -509,7 +509,7 @@ function ResultPageInner() {
             style={{
               borderRadius: "999px",
               padding: "12px 18px",
-              cursor: loading || atLimit ? "not-allowed" : "pointer",
+              cursor: loading || isHistoryMode || atLimit ? "not-allowed" : "pointer",
               fontFamily: "var(--font-label)",
               fontSize: "12px",
               letterSpacing: "0.06em",
@@ -557,28 +557,72 @@ function ResultPageInner() {
           </button>
         </div>
 
-        <div style={{ marginTop: "40px", paddingTop: "24px", borderTop: "1px solid var(--br)" }}>
+        {isHistoryMode && (
+          <p style={{
+            marginTop: "10px",
+            fontFamily: "var(--font-dm-mono), monospace",
+            fontSize: "11px",
+            color: "var(--mu)",
+            letterSpacing: "0.05em",
+          }}>
+            {lang === "en"
+              ? "← → Navigate history · Go to newest to get a new recommendation"
+              : "← → Πλοήγηση ιστορικού · Πήγαινε στην πιο πρόσφατη για νέα σύσταση"}
+          </p>
+        )}
+
+        <div style={{ marginTop: "40px", paddingTop: "24px", borderTop: "1px solid var(--br)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
           <a
             href="https://forms.gle/UmJXTXYnsZUbsCoZ9"
             target="_blank"
             rel="noopener noreferrer"
             style={{
               display: "inline-block",
-              color: "var(--mu)",
+              color: "var(--go)",
               fontFamily: "var(--font-dm-mono), monospace",
               fontSize: "11px",
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               textDecoration: "none",
+              borderBottom: "1px solid rgba(196,150,42,0.3)",
+              paddingBottom: "2px",
+              transition: "border-color 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderBottomColor = "var(--go)"}
+            onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(196,150,42,0.3)"}
+          >
+            {lang === "el" ? "Πες μας τη γνώμη σου →" : "Share your feedback →"}
+          </a>
+
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem("cinedna:lastResult");
+              localStorage.removeItem("cinedna:shownFilmIds");
+              localStorage.removeItem("cinedna_history");
+              localStorage.removeItem("cinedna:history");
+              router.push("/onboarding");
+            }}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--mu)",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "11px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              padding: 0,
+              textDecoration: "none",
               borderBottom: "1px solid var(--br)",
               paddingBottom: "2px",
               transition: "color 0.15s",
             }}
-            onMouseEnter={e => e.target.style.color = "var(--go)"}
-            onMouseLeave={e => e.target.style.color = "var(--mu)"}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--cr)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--mu)"}
           >
-            {lang === "el" ? "Πες μας τη γνώμη σου →" : "Share your feedback →"}
-          </a>
+            {lang === "el" ? "Νέο DNA →" : "New DNA →"}
+          </button>
         </div>
       </section>
 
@@ -587,13 +631,21 @@ function ResultPageInner() {
           border: none;
           background: transparent;
           color: #444;
-          font-size: 26px;
+          font-size: 22px;
           cursor: pointer;
           line-height: 1;
-          padding: 2px 6px;
+          padding: 10px 16px;
+          min-width: 44px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          transition: background 140ms ease, color 140ms ease;
         }
         .history-nav-arrow:hover:not(:disabled) {
           color: #c4962a;
+          background: rgba(196,150,42,0.08);
         }
         .film-card-grid {
           display: grid;

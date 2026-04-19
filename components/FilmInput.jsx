@@ -10,7 +10,10 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
+  const resultRefs = useRef([]);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -21,39 +24,31 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
     const handleOutsideClick = (event) => {
       if (!wrapperRef.current?.contains(event.target)) {
         setOpen(false);
+        setFocusedIndex(-1);
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (trimmed.length < 2) {
       setResults([]);
       setLoading(false);
       return undefined;
     }
-
     debounceRef.current = setTimeout(async () => {
       try {
         setLoading(true);
         setError("");
         const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
         const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data?.error || t.generic_error);
-        }
-
+        if (!response.ok) throw new Error(data?.error || t.generic_error);
         setResults(Array.isArray(data) ? data : []);
         setOpen(true);
+        setFocusedIndex(-1);
       } catch (err) {
         setResults([]);
         setError(err?.message || t.generic_error);
@@ -61,12 +56,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
         setLoading(false);
       }
     }, 250);
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
   const handlePick = (movie) => {
@@ -74,8 +64,59 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
     setResults([]);
     setOpen(false);
     setError("");
+    setFocusedIndex(-1);
     onSelect?.(index, { id: movie.id, title: movie.title });
   };
+
+  // Typing manually clears the confirmed TMDB selection
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    setOpen(true);
+    onSelect?.(index, { id: null, title: val });
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === "ArrowDown" && open && results.length > 0) {
+      e.preventDefault();
+      setFocusedIndex(0);
+      resultRefs.current[0]?.focus();
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      setFocusedIndex(-1);
+    }
+  };
+
+  const handleResultKeyDown = (e, movie, idx) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handlePick(movie);
+      inputRef.current?.focus();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = idx + 1;
+      if (next < results.length) {
+        setFocusedIndex(next);
+        resultRefs.current[next]?.focus();
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = idx - 1;
+      if (prev >= 0) {
+        setFocusedIndex(prev);
+        resultRefs.current[prev]?.focus();
+      } else {
+        setFocusedIndex(-1);
+        inputRef.current?.focus();
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      setFocusedIndex(-1);
+      inputRef.current?.focus();
+    }
+  };
+
+  const isConfirmed = Boolean(value?.id);
 
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
@@ -83,28 +124,26 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
         style={{
           display: "block",
           marginBottom: "8px",
-          color: "var(--mu)",
+          color: isConfirmed ? "var(--go)" : "var(--mu)",
           fontFamily: "var(--font-dm-mono), monospace",
           fontSize: "12px",
           letterSpacing: "0.06em",
           textTransform: "uppercase",
+          transition: "color 160ms ease",
         }}
       >
-        {t.film_label} {index + 1}
+        {t.film_label} {index + 1} {isConfirmed ? "✓" : ""}
       </label>
       <input
+        ref={inputRef}
         value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => {
-          if (results.length > 0) setOpen(true);
-        }}
+        onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
+        onFocus={() => { if (results.length > 0) setOpen(true); }}
         placeholder={placeholder || t.step1_placeholder}
         style={{
           width: "100%",
-          border: "1px solid var(--br)",
+          border: isConfirmed ? "1px solid var(--go)" : "1px solid var(--br)",
           background: "var(--sf)",
           color: "var(--cr)",
           borderRadius: "12px",
@@ -112,6 +151,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
           outline: "none",
           fontSize: "17px",
           fontFamily: "var(--font-cormorant), serif",
+          transition: "border-color 160ms ease",
         }}
       />
 
@@ -157,11 +197,13 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
             boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
           }}
         >
-          {results.map((movie) => (
+          {results.map((movie, idx) => (
             <button
               key={movie.id}
+              ref={(el) => { resultRefs.current[idx] = el; }}
               type="button"
               onClick={() => handlePick(movie)}
+              onKeyDown={(e) => handleResultKeyDown(e, movie, idx)}
               style={{
                 width: "100%",
                 display: "flex",
@@ -169,7 +211,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
                 gap: "10px",
                 border: "none",
                 borderBottom: "1px solid var(--br)",
-                background: "transparent",
+                background: focusedIndex === idx ? "rgba(196,150,42,0.08)" : "transparent",
                 color: "var(--cr)",
                 padding: "10px",
                 textAlign: "left",

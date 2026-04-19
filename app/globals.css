@@ -76,3 +76,12 @@ body {
   border-color: var(--gold);
   background: rgba(196, 150, 42, 0.1);
 }
+
+@keyframes stepFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step-animate {
+  animation: stepFadeIn 220ms ease forwards;
+}

@@ -1,10 +1,16 @@
 "use client";
 
+import { useState } from "react";
+
 export default function MoodCard({ label, description = "", selected = false, onClick }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         borderRadius: "14px",
         padding: "14px 16px",
@@ -12,10 +18,13 @@ export default function MoodCard({ label, description = "", selected = false, on
         fontFamily: "var(--font-body)",
         fontSize: "22px",
         fontStyle: "italic",
-        border: selected ? "1px solid #c4962a" : "1px solid var(--br)",
+        border: selected
+          ? "1px solid #c4962a"
+          : hovered
+          ? "1px solid #666"
+          : "1px solid var(--br)",
         background: selected ? "rgba(196, 150, 42, 0.12)" : "transparent",
         color: selected ? "#e8c76a" : "var(--cr)",
-        opacity: selected ? 1 : 0.6,
         position: "relative",
         textAlign: "left",
         transition: "all 160ms ease",
