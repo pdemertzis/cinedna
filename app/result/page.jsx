@@ -475,7 +475,7 @@ function ResultPageInner() {
               marginTop: "10px",
               fontFamily: "var(--font-dm-mono), monospace",
               fontSize: "11px",
-              color: atLimit ? "#cf6c6c" : "var(--mu)",
+              color: atLimit ? "var(--error)" : "var(--mu)",
               letterSpacing: "0.05em",
             }}
           >
@@ -490,7 +490,7 @@ function ResultPageInner() {
         {error && (
           <p
             style={{
-              color: "#cf6c6c",
+              color: "var(--error)",
               marginTop: "10px",
               fontFamily: "var(--font-dm-mono), monospace",
               fontSize: "12px",
@@ -586,7 +586,7 @@ function ResultPageInner() {
               textDecoration: "none",
               borderBottom: "1px solid rgba(196,150,42,0.3)",
               paddingBottom: "2px",
-              transition: "border-color 0.15s",
+              transition: "border-color 160ms ease",
             }}
             onMouseEnter={e => e.currentTarget.style.borderBottomColor = "var(--go)"}
             onMouseLeave={e => e.currentTarget.style.borderBottomColor = "rgba(196,150,42,0.3)"}
@@ -616,7 +616,7 @@ function ResultPageInner() {
               textDecoration: "none",
               borderBottom: "1px solid var(--br)",
               paddingBottom: "2px",
-              transition: "color 0.15s",
+              transition: "color 160ms ease",
             }}
             onMouseEnter={e => e.currentTarget.style.color = "var(--cr)"}
             onMouseLeave={e => e.currentTarget.style.color = "var(--mu)"}
@@ -630,7 +630,7 @@ function ResultPageInner() {
         .history-nav-arrow {
           border: none;
           background: transparent;
-          color: #444;
+          color: var(--di);
           font-size: 22px;
           cursor: pointer;
           line-height: 1;
@@ -641,11 +641,11 @@ function ResultPageInner() {
           align-items: center;
           justify-content: center;
           border-radius: 999px;
-          transition: background 140ms ease, color 140ms ease;
+          transition: background 160ms ease, color 160ms ease;
         }
         .history-nav-arrow:hover:not(:disabled) {
-          color: #c4962a;
-          background: rgba(196,150,42,0.08);
+          color: var(--go);
+          background: var(--gold-hover);
         }
         .film-card-grid {
           display: grid;

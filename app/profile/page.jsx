@@ -250,7 +250,7 @@ export default function ProfilePage() {
             <div
               style={{
                 color: "var(--gl)",
-                fontSize: "28px",
+                fontSize: "40px",
                 lineHeight: 1,
                 fontFamily: "var(--font-cormorant), serif",
               }}
@@ -303,83 +303,81 @@ export default function ProfilePage() {
               </p>
             ) : (
               listHistory.map((item, idx) => (
-                <button
-                  type="button"
-                  onClick={() => router.push(`/result?index=${idx}`)}
+                <HistoryCard
                   key={`${item?.timestamp || item?.createdAt || "item"}-${idx}`}
-                  style={{
-                    border: "1px solid var(--br)",
-                    borderRadius: "12px",
-                    background: "var(--bk)",
-                    padding: "10px 12px",
-                    display: "grid",
-                    gridTemplateColumns: "80px 1fr",
-                    gap: "12px",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "80px",
-                      height: "112px",
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                      border: "1px solid var(--br)",
-                      background: "var(--sf)",
-                    }}
-                  >
-                    {item?.film?.poster ? (
-                      <img
-                        src={item.film.poster}
-                        alt={item?.film?.title || "Poster"}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                  <div style={{ display: "grid", gap: "4px" }}>
-                    <strong
-                      style={{
-                        color: "var(--gl)",
-                        fontFamily: "var(--font-body)",
-                        fontSize: "22px",
-                        fontStyle: "italic",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {item?.film?.title || "—"}
-                    </strong>
-                    <span
-                      style={{
-                        color: "var(--mu)",
-                        fontFamily: "var(--font-label)",
-                        fontSize: "11px",
-                      }}
-                    >
-                      {item?.film?.year || "----"}
-                      {item?.film?.director ? ` • ${item.film.director}` : ""}
-                    </span>
-                    <span
-                      style={{
-                        color: "var(--mu)",
-                        fontFamily: "var(--font-label)",
-                        fontSize: "11px",
-                      }}
-                    >
-                      {formatDate(item?.timestamp || item?.createdAt, lang)}
-                    </span>
-                  </div>
-                </button>
+                  item={item}
+                  lang={lang}
+                  onClick={() => router.push(`/result?index=${idx}`)}
+                />
               ))
             )}
           </div>
         </div>
       </section>
     </main>
+  );
+}
+
+function HistoryCard({ item, lang, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        border: hovered ? "1px solid #666" : "1px solid var(--br)",
+        borderRadius: "12px",
+        background: "var(--bk)",
+        padding: "10px 12px",
+        display: "grid",
+        gridTemplateColumns: "80px 1fr",
+        gap: "12px",
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "border-color 160ms ease",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          width: "80px",
+          height: "112px",
+          borderRadius: "8px",
+          overflow: "hidden",
+          border: "1px solid var(--br)",
+          background: "var(--sf)",
+        }}
+      >
+        {item?.film?.poster ? (
+          <img
+            src={item.film.poster}
+            alt={item?.film?.title || "Poster"}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : null}
+      </div>
+      <div style={{ display: "grid", gap: "4px", alignContent: "start" }}>
+        <strong
+          style={{
+            color: "var(--gl)",
+            fontFamily: "var(--font-body)",
+            fontSize: "22px",
+            fontStyle: "italic",
+            fontWeight: 500,
+          }}
+        >
+          {item?.film?.title || "—"}
+        </strong>
+        <span style={{ color: "var(--mu)", fontFamily: "var(--font-label)", fontSize: "11px" }}>
+          {item?.film?.year || "----"}
+          {item?.film?.director ? ` • ${item.film.director}` : ""}
+        </span>
+        <span style={{ color: "var(--mu)", fontFamily: "var(--font-label)", fontSize: "11px" }}>
+          {formatDate(item?.timestamp || item?.createdAt, lang)}
+        </span>
+      </div>
+    </button>
   );
 }

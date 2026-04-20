@@ -178,7 +178,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
         <div
           style={{
             marginTop: "6px",
-            color: "#cf6c6c",
+            color: "var(--error)",
             fontFamily: "var(--font-dm-mono), monospace",
             fontSize: "12px",
           }}
@@ -217,7 +217,7 @@ export default function FilmInput({ index = 0, value, onSelect, placeholder = ""
                 gap: "10px",
                 border: "none",
                 borderBottom: "1px solid var(--br)",
-                background: focusedIndex === idx ? "rgba(196,150,42,0.08)" : "transparent",
+                background: focusedIndex === idx ? "var(--gold-hover)" : "transparent",
                 color: "var(--cr)",
                 padding: "10px",
                 textAlign: "left",

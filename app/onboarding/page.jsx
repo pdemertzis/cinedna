@@ -345,7 +345,7 @@ export default function OnboardingPage() {
             </p>
             {!loading && error ? (
               <div style={{ marginTop: "6px" }}>
-                <p style={{ color: "#cf6c6c", marginBottom: "10px" }}>{error}</p>
+                <p style={{ color: "var(--error)", marginBottom: "10px" }}>{error}</p>
                 <button
                   type="button"
                   onClick={() => goToStep(3)}
@@ -365,11 +365,6 @@ export default function OnboardingPage() {
         )}
       </section>
 
-      <style jsx>{`
-        @keyframes cinednaSpin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </main>
   );
 }

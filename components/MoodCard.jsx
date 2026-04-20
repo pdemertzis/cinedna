@@ -19,15 +19,15 @@ export default function MoodCard({ label, description = "", selected = false, on
         fontSize: "22px",
         fontStyle: "italic",
         border: selected
-          ? "1px solid #c4962a"
+          ? "1px solid var(--gold)"
           : hovered
           ? "1px solid #666"
           : "1px solid var(--br)",
-        background: selected ? "rgba(196, 150, 42, 0.12)" : "transparent",
-        color: selected ? "#e8c76a" : "var(--cr)",
+        background: selected ? "var(--gold-bg)" : "transparent",
+        color: selected ? "var(--gl)" : "var(--cr)",
         position: "relative",
         textAlign: "left",
-        transition: "all 160ms ease",
+        transition: "var(--transition-fast)",
       }}
     >
       {selected ? (
@@ -36,7 +36,7 @@ export default function MoodCard({ label, description = "", selected = false, on
             position: "absolute",
             top: "8px",
             right: "10px",
-            color: "#c4962a",
+            color: "var(--go)",
             fontSize: "14px",
             lineHeight: 1,
           }}
@@ -51,7 +51,7 @@ export default function MoodCard({ label, description = "", selected = false, on
             marginTop: "6px",
             fontSize: "12px",
             fontFamily: "var(--font-label)",
-            color: selected ? "#e8dcc8" : "var(--mu)",
+            color: selected ? "var(--cr)" : "var(--mu)",
             letterSpacing: "0.02em",
           }}
         >

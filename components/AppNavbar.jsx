@@ -24,7 +24,7 @@ export default function AppNavbar() {
         background: "transparent",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(196,150,42,0.15)",
+        borderBottom: "1px solid var(--gold-nav-border)",
         zIndex: 1000,
       }}
     >
@@ -48,7 +48,7 @@ export default function AppNavbar() {
                   fontFamily: "var(--font-dm-mono), monospace",
                   fontSize: "13px",
                   letterSpacing: "0.3em",
-                  color: "#c4962a",
+                  color: "var(--go)",
                 }}
               >
                 CINE
@@ -58,7 +58,7 @@ export default function AppNavbar() {
                   fontFamily: "var(--font-cormorant), serif",
                   fontSize: "13px",
                   fontStyle: "italic",
-                  color: "#e8dcc8",
+                  color: "var(--cr)",
                 }}
               >
                 DNA
@@ -80,9 +80,9 @@ export default function AppNavbar() {
               type="button"
               onClick={() => setLang("el")}
               style={{
-                background: lang === "el" ? "rgba(196,150,42,0.1)" : "transparent",
+                background: lang === "el" ? "var(--gold-hover)" : "transparent",
                 border: "none",
-                color: lang === "el" ? "#e8c76a" : "#444",
+                color: lang === "el" ? "var(--gl)" : "var(--di)",
                 padding: "6px 10px",
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-mono), monospace",
@@ -94,14 +94,14 @@ export default function AppNavbar() {
             >
               ΕΛ
             </button>
-            <span style={{ color: "#2a2a2a", fontSize: "12px", lineHeight: 1, userSelect: "none" }}>|</span>
+            <span style={{ color: "var(--br)", fontSize: "12px", lineHeight: 1, userSelect: "none" }}>|</span>
             <button
               type="button"
               onClick={() => setLang("en")}
               style={{
-                background: lang === "en" ? "rgba(196,150,42,0.1)" : "transparent",
+                background: lang === "en" ? "var(--gold-hover)" : "transparent",
                 border: "none",
-                color: lang === "en" ? "#e8c76a" : "#444",
+                color: lang === "en" ? "var(--gl)" : "var(--di)",
                 padding: "6px 10px",
                 cursor: "pointer",
                 fontFamily: "var(--font-dm-mono), monospace",
