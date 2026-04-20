@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<title>CineDNA — Export Social PNGs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0a;color:#e8dcc8;font-family:'DM Mono',monospace;padding:32px;padding-right:292px;}
+
+/* ── SIDEBAR PANEL ─────────────────────────────────────── */
+#panel{
+  position:fixed;top:0;right:0;bottom:0;width:272px;
+  background:#0c0c0c;border-left:1px solid #1e1e1e;
+  overflow-y:auto;padding:20px 16px;z-index:999;
+}
+.p-title{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#c4962a;margin-bottom:2px;}
+.p-sub{font-size:8px;color:#2a2a2a;letter-spacing:.06em;margin-bottom:4px;}
+.p-note{font-size:7.5px;color:#1e1e1e;letter-spacing:.04em;line-height:1.5;margin-bottom:14px;border:1px solid #1a1a1a;padding:7px 8px;}
+#btn-all{
+  background:#c4962a;border:none;color:#080808;
+  font-family:'DM Mono',monospace;font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:12px;cursor:pointer;width:100%;font-weight:500;
+  margin-bottom:6px;transition:opacity .15s;
+}
+#btn-all:hover{opacity:.85;}
+#btn-all:disabled{opacity:.35;cursor:wait;}
+#status{
+  font-size:8px;color:#444;letter-spacing:.05em;
+  margin-bottom:16px;min-height:28px;line-height:1.5;
+}
+#status.ok{color:#3a6b3a;}
+#status.err{color:#cf6c6c;}
+#progress-bar{height:2px;background:#1a1a1a;margin-bottom:16px;border-radius:1px;overflow:hidden;}
+#progress-fill{height:100%;width:0%;background:#c4962a;transition:width .3s ease;}
+.plat{margin-bottom:16px;}
+.plat-label{
+  font-size:7px;letter-spacing:.22em;text-transform:uppercase;
+  color:#2a2a2a;border-bottom:1px solid #141414;
+  padding-bottom:5px;margin-bottom:7px;
+}
+.pb{
+  display:block;width:100%;text-align:left;
+  background:transparent;border:1px solid #181818;
+  color:#3a3a3a;font-family:'DM Mono',monospace;
+  font-size:7.5px;letter-spacing:.04em;
+  padding:5px 7px;cursor:pointer;margin-bottom:3px;
+  transition:all .12s;position:relative;
+}
+.pb:hover{border-color:#c4962a;color:#e8dcc8;}
+.pb.done{border-color:#1a2e1a;color:#2a5a2a;}
+.pb.done::after{content:'✓';position:absolute;right:7px;top:50%;transform:translateY(-50%);color:#2a5a2a;font-size:9px;}
+.pb .d{float:right;font-size:6.5px;color:#222;margin-left:4px;margin-right:16px;}
+
+/* ── PREVIEW LAYOUT ────────────────────────────────────── */
+.section{margin-bottom:56px;}
+.section-label{
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  color:#c4962a;margin-bottom:20px;padding-bottom:8px;
+  border-bottom:1px solid #1a1a1a;
+}
+.row{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;}
+.aw{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.al{font-size:8px;color:#2a2a2a;letter-spacing:.06em;text-transform:uppercase;}
+.ad{font-size:7px;color:#1a1a1a;letter-spacing:.04em;}
+
+/* ── LOGO SYMBOL (CSS component) ──────────────────────── */
+.logo-symbol{position:relative;display:flex;align-items:center;justify-content:center;}
+.fl,.fr{position:absolute;top:0;bottom:0;width:2px;background:#c4962a;}
+.fl{left:15%;}.fr{right:15%;}
+.rungs{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-around;padding:8% 14%;}
+.rung{height:1.5px;background:#e8c76a;opacity:.9;}
+.rung:nth-child(even){background:#c4962a;opacity:.7;}
+.diamond{width:38%;height:38%;transform:rotate(45deg);border:1.5px solid #e8c76a;display:flex;align-items:center;justify-content:center;background:#080808;}
+.diamond-inner{width:50%;height:50%;background:#c4962a;opacity:.6;}
+.logo-border{position:absolute;top:8%;left:8%;right:8%;bottom:8%;border:1px solid #2a2a2a;}
+
+/* ── ASSET CONTAINERS ──────────────────────────────────── */
+.circle{border-radius:50%;overflow:hidden;background:#080808;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sq{background:#080808;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cover{background:#080808;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;}
+.post{background:#080808;position:relative;overflow:hidden;flex-shrink:0;}
+.story{background:#080808;position:relative;overflow:hidden;flex-shrink:0;}
+.strip{position:absolute;top:0;bottom:0;width:3px;background:repeating-linear-gradient(to bottom,#c4962a 0,#c4962a 8px,transparent 8px,transparent 20px);opacity:.08;}
+.wm{display:flex;align-items:center;gap:4px;}
+.wm .cine{font-family:'DM Mono',monospace;letter-spacing:.24em;color:#c4962a;text-transform:uppercase;}
+.wm .dna{font-family:'Cormorant Garamond',serif;font-style:italic;color:#e8dcc8;}
+.hl{border-radius:50%;background:#080808;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #1a1a1a;overflow:hidden;flex-shrink:0;}
+
+/* ── LOGO SYMBOL SHORTHAND ─────────────────────────────── */
+.sym{position:relative;}
+</style>
+</head>
+<body>
+
+<!-- ═══ PANEL ════════════════════════════════════════════════════ -->
+<div id="panel">
+  <div class="p-title">CineDNA</div>
+  <div class="p-sub">Social Assets Export</div>
+  <div class="p-note">
+    Άνοιξε σε Chrome ή Edge.<br>
+    Περίμενε 3″ για τα fonts.<br>
+    Αποθήκευση στο Downloads.
+  </div>
+
+  <button id="btn-all">↓ Export All (22 PNGs)</button>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="status">Έτοιμο.</div>
+
+  <div class="plat">
+    <div class="plat-label">Instagram</div>
+    <button class="pb" data-id="ig-profile-a">Profile A — Symbol <span class="d">320×320</span></button>
+    <button class="pb" data-id="ig-profile-b">Profile B — Full Logo <span class="d">320×320</span></button>
+    <button class="pb" data-id="ig-profile-c">Profile C — Stacked <span class="d">320×320</span></button>
+    <button class="pb" data-id="ig-profile-d">Profile D — Horizontal <span class="d">320×320</span></button>
+    <button class="pb" data-id="ig-feed-dna">Feed — DNA Reveal <span class="d">1080×1080</span></button>
+    <button class="pb" data-id="ig-feed-promo">Feed — Promo <span class="d">1080×1080</span></button>
+    <button class="pb" data-id="ig-story">Story / Reel Cover <span class="d">1080×1920</span></button>
+    <button class="pb" data-id="ig-hl-dna">Highlight — DNA <span class="d">161×161</span></button>
+    <button class="pb" data-id="ig-hl-picks">Highlight — Picks <span class="d">161×161</span></button>
+    <button class="pb" data-id="ig-hl-film">Highlight — Film <span class="d">161×161</span></button>
+    <button class="pb" data-id="ig-hl-how">Highlight — How <span class="d">161×161</span></button>
+  </div>
+
+  <div class="plat">
+    <div class="plat-label">TikTok</div>
+    <button class="pb" data-id="tt-profile-icon">Profile — Icon <span class="d">200×200</span></button>
+    <button class="pb" data-id="tt-profile-word">Profile — Wordmark <span class="d">200×200</span></button>
+    <button class="pb" data-id="tt-cover-promo">Video Cover — Promo <span class="d">1080×1920</span></button>
+    <button class="pb" data-id="tt-cover-dna">Video Cover — DNA Type <span class="d">1080×1920</span></button>
+  </div>
+
+  <div class="plat">
+    <div class="plat-label">Facebook</div>
+    <button class="pb" data-id="fb-profile-icon">Profile — Icon <span class="d">170×170</span></button>
+    <button class="pb" data-id="fb-profile-word">Profile — Wordmark <span class="d">170×170</span></button>
+    <button class="pb" data-id="fb-cover">Cover Photo <span class="d">851×315</span></button>
+  </div>
+
+  <div class="plat">
+    <div class="plat-label">LinkedIn</div>
+    <button class="pb" data-id="li-logo-icon">Company Logo — Icon <span class="d">300×300</span></button>
+    <button class="pb" data-id="li-logo-word">Company Logo — Wordmark <span class="d">300×300</span></button>
+    <button class="pb" data-id="li-cover">Company Cover <span class="d">1128×191</span></button>
+    <button class="pb" data-id="li-post">Post 1:1 <span class="d">1080×1080</span></button>
+  </div>
+</div>
+
+<!-- ═══ ASSETS ════════════════════════════════════════════════════ -->
+
+<!-- INSTAGRAM ─────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Instagram</div>
+  <div class="row">
+
+    <div class="aw">
+      <div class="al">Profile A — Symbol</div>
+      <div class="ad">320 × 320px</div>
+      <div id="ig-profile-a" class="circle" style="width:100px;height:100px;">
+        <div style="width:62px;height:62px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Profile B — Full Logo</div>
+      <div class="ad">320 × 320px</div>
+      <div id="ig-profile-b" class="circle" style="width:100px;height:100px;padding:12px;">
+        <img src="../assets/cinedna-logo.svg" alt="CineDNA" style="width:100%;height:auto;object-fit:contain;">
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Profile C — Stacked</div>
+      <div class="ad">320 × 320px</div>
+      <div id="ig-profile-c" class="circle" style="width:100px;height:100px;flex-direction:column;gap:6px;">
+        <div style="width:34px;height:34px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+        <div style="text-align:center;line-height:1;">
+          <span style="font-family:'DM Mono',monospace;font-size:7px;letter-spacing:.22em;color:#c4962a;display:block;">CINE</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:9px;color:#e8dcc8;display:block;margin-top:1px;">DNA</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Profile D — Horizontal</div>
+      <div class="ad">320 × 320px</div>
+      <div id="ig-profile-d" class="circle" style="width:100px;height:100px;flex-direction:row;gap:8px;padding:0 10px;">
+        <div style="width:28px;height:28px;position:relative;flex-shrink:0;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:2px;">
+          <span style="font-family:'DM Mono',monospace;font-size:7px;letter-spacing:.2em;color:#c4962a;line-height:1;">CINE</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:9px;color:#e8dcc8;line-height:1;">DNA</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Feed — DNA Reveal</div>
+      <div class="ad">1080 × 1080px</div>
+      <div id="ig-feed-dna" class="post" style="width:240px;height:240px;">
+        <div class="strip" style="left:6px;"></div>
+        <div class="strip" style="right:6px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:28px;">
+          <div style="font-family:'DM Mono',monospace;font-size:7px;color:#c4962a;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Το DNA σου</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:#c4962a;line-height:1;margin-bottom:8px;">Σκοτεινός<br>Ρομαντικός</div>
+          <div style="height:1px;width:32px;background:rgba(196,150,42,.5);margin:10px 0;"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:#e8dcc8;line-height:1.3;margin-bottom:10px;">In the Mood<br>for Love</div>
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#444;letter-spacing:.08em;text-transform:uppercase;">Wong Kar-wai · 2000</div>
+          <div style="position:absolute;bottom:14px;left:28px;right:28px;display:flex;align-items:center;justify-content:space-between;">
+            <div class="wm"><span class="cine" style="font-size:7px;">CINE</span><span class="dna" style="font-size:8px;">DNA</span></div>
+            <div style="font-family:'DM Mono',monospace;font-size:6px;color:#333;letter-spacing:.06em;">cinedna-pi.vercel.app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Feed — Promo</div>
+      <div class="ad">1080 × 1080px</div>
+      <div id="ig-feed-promo" class="post" style="width:240px;height:240px;">
+        <div class="strip" style="left:6px;"></div>
+        <div class="strip" style="right:6px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#c4962a;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;">CINE · DNA</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:#e8dcc8;line-height:1.1;margin-bottom:14px;">Βρες μία ταινία<br>χωρίς scrolling.</div>
+          <div style="height:1px;width:28px;background:rgba(196,150,42,.5);margin:0 auto 14px;"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:#888;">Find one great film.<br>No scrolling.</div>
+          <div style="margin-top:18px;border:1px solid #c4962a;border-radius:999px;padding:5px 12px;">
+            <span style="font-family:'DM Mono',monospace;font-size:7px;letter-spacing:.08em;color:#e8c76a;text-transform:uppercase;">Ξεκίνα →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Story / Reel Cover</div>
+      <div class="ad">1080 × 1920px</div>
+      <div id="ig-story" class="story" style="width:135px;height:240px;">
+        <div class="strip" style="left:4px;"></div>
+        <div class="strip" style="right:4px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:20px 16px;">
+          <div class="wm"><span class="cine" style="font-size:7px;">CINE</span><span class="dna" style="font-size:8px;">DNA</span></div>
+          <div style="text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:6px;color:#c4962a;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">Ανακάλυψε</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;color:#e8dcc8;line-height:1;margin-bottom:6px;">το DNA σου</div>
+            <div style="height:1px;width:28px;background:rgba(196,150,42,.5);margin:8px auto;"></div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:#888;margin-bottom:12px;">Discover your<br>cinematic DNA</div>
+            <div style="border:1px solid rgba(196,150,42,.6);border-radius:999px;padding:4px 10px;display:inline-block;">
+              <span style="font-family:'DM Mono',monospace;font-size:6px;letter-spacing:.08em;color:#c4962a;text-transform:uppercase;">12 DNA Types</span>
+            </div>
+          </div>
+          <div style="text-align:center;font-family:'DM Mono',monospace;font-size:6px;color:#333;letter-spacing:.06em;">cinedna-pi.vercel.app</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Highlight Covers</div>
+      <div class="ad">161 × 161px each</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div id="ig-hl-dna" class="hl" style="width:56px;height:56px;">
+            <div style="font-family:'DM Mono',monospace;font-size:8px;color:#c4962a;letter-spacing:.06em;text-transform:uppercase;">DNA</div>
+          </div>
+          <div style="font-size:7px;color:#2a2a2a;">Προφίλ</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div id="ig-hl-picks" class="hl" style="width:56px;height:56px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:#e8dcc8;">✦</div>
+          </div>
+          <div style="font-size:7px;color:#2a2a2a;">Picks</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div id="ig-hl-film" class="hl" style="width:56px;height:56px;">
+            <div style="font-family:'DM Mono',monospace;font-size:7px;color:#c4962a;letter-spacing:.04em;text-align:center;line-height:1.4;">FILM<br>STRIP</div>
+          </div>
+          <div style="font-size:7px;color:#2a2a2a;">Κινηματογ.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div id="ig-hl-how" class="hl" style="width:56px;height:56px;">
+            <div style="font-family:'DM Mono',monospace;font-size:7px;color:#444;letter-spacing:.04em;text-align:center;line-height:1.4;">HOW<br>IT<br>WORKS</div>
+          </div>
+          <div style="font-size:7px;color:#2a2a2a;">Πώς;</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIKTOK ────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">TikTok</div>
+  <div class="row">
+
+    <div class="aw">
+      <div class="al">Profile — Icon</div>
+      <div class="ad">200 × 200px</div>
+      <div id="tt-profile-icon" class="circle" style="width:80px;height:80px;">
+        <div style="width:52px;height:52px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Profile — Wordmark</div>
+      <div class="ad">200 × 200px</div>
+      <div id="tt-profile-word" class="circle" style="width:80px;height:80px;flex-direction:column;gap:4px;">
+        <div style="width:30px;height:30px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+        <div class="wm"><span class="cine" style="font-size:7px;">CINE</span><span class="dna" style="font-size:8px;">DNA</span></div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Video Cover — Promo</div>
+      <div class="ad">1080 × 1920px</div>
+      <div id="tt-cover-promo" class="story" style="width:135px;height:240px;background:#060606;">
+        <div class="strip" style="left:4px;"></div>
+        <div class="strip" style="right:4px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:18px;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#444;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;">@cinedna</div>
+          <div style="width:36px;height:36px;position:relative;margin-bottom:16px;">
+            <div class="logo-symbol" style="width:100%;height:100%;">
+              <div class="fl"></div><div class="fr"></div>
+              <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+              <div class="diamond"><div class="diamond-inner"></div></div>
+              <div class="logo-border"></div>
+            </div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:#e8dcc8;line-height:1;margin-bottom:10px;">Ποιο είναι<br>το DNA σου;</div>
+          <div style="height:1px;width:24px;background:rgba(196,150,42,.5);margin:0 auto 10px;"></div>
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#c4962a;letter-spacing:.1em;text-transform:uppercase;">What's yours?</div>
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);display:flex;align-items:flex-end;padding:0 8px 6px;justify-content:space-between;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#555;letter-spacing:.06em;">cinedna-pi.vercel.app</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Video Cover — DNA Type</div>
+      <div class="ad">1080 × 1920px</div>
+      <div id="tt-cover-dna" class="story" style="width:135px;height:240px;background:#050505;">
+        <div class="strip" style="left:4px;"></div>
+        <div class="strip" style="right:4px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:16px;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#c4962a;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">DNA Type · D</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:#c4962a;line-height:1.05;margin-bottom:8px;">Ονειρικός<br>Εξερευνητής</div>
+          <div style="height:1px;width:28px;background:rgba(196,150,42,.4);margin:8px 0;"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:#888;margin-bottom:4px;">Dreamy Explorer</div>
+          <div style="font-family:'DM Mono',monospace;font-size:7px;color:#333;letter-spacing:.04em;margin-bottom:16px;">Tarkovsky · Lynch · Malick</div>
+          <div style="border:1px solid rgba(196,150,42,.4);border-radius:999px;padding:4px 10px;">
+            <span style="font-family:'DM Mono',monospace;font-size:6px;letter-spacing:.08em;color:#c4962a;text-transform:uppercase;">Ανακάλυψε →</span>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);display:flex;align-items:flex-end;padding:0 8px 6px;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#555;">@cinedna</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FACEBOOK ───────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Facebook</div>
+  <div class="row" style="align-items:flex-start;">
+
+    <div class="aw">
+      <div class="al">Profile — Icon</div>
+      <div class="ad">170 × 170px</div>
+      <div id="fb-profile-icon" class="sq" style="width:80px;height:80px;border-radius:8px;">
+        <div style="width:52px;height:52px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Profile — Wordmark</div>
+      <div class="ad">170 × 170px</div>
+      <div id="fb-profile-word" class="sq" style="width:80px;height:80px;border-radius:8px;flex-direction:column;gap:5px;">
+        <div style="width:28px;height:28px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+        <div class="wm"><span class="cine" style="font-size:6px;">CINE</span><span class="dna" style="font-size:7px;">DNA</span></div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Cover Photo</div>
+      <div class="ad">851 × 315px</div>
+      <div id="fb-cover" class="cover" style="width:460px;height:170px;">
+        <div class="strip" style="left:10px;"></div>
+        <div class="strip" style="left:24px;"></div>
+        <div class="strip" style="right:10px;"></div>
+        <div class="strip" style="right:24px;"></div>
+        <div style="display:flex;align-items:center;gap:40px;padding:0 50px;width:100%;">
+          <div style="width:80px;height:80px;position:relative;flex-shrink:0;">
+            <div class="logo-symbol" style="width:100%;height:100%;">
+              <div class="fl"></div><div class="fr"></div>
+              <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+              <div class="diamond"><div class="diamond-inner"></div></div>
+              <div class="logo-border"></div>
+            </div>
+          </div>
+          <div>
+            <div class="wm" style="margin-bottom:8px;">
+              <span class="cine" style="font-size:22px;">CINE</span>
+              <span class="dna" style="font-size:24px;">DNA</span>
+            </div>
+            <div style="height:1px;background:rgba(196,150,42,.3);margin-bottom:10px;"></div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:#888;">Ανακάλυψε το κινηματογραφικό σου DNA.</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:#444;margin-top:2px;">Discover your cinematic DNA.</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;flex-shrink:0;">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#333;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Free · No account</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:#c4962a;letter-spacing:.06em;">cinedna-pi.vercel.app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LINKEDIN ───────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">LinkedIn</div>
+  <div class="row" style="align-items:flex-start;">
+
+    <div class="aw">
+      <div class="al">Company Logo — Icon</div>
+      <div class="ad">300 × 300px</div>
+      <div id="li-logo-icon" class="sq" style="width:80px;height:80px;">
+        <div style="width:54px;height:54px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Company Logo — Wordmark</div>
+      <div class="ad">300 × 300px</div>
+      <div id="li-logo-word" class="sq" style="width:80px;height:80px;flex-direction:column;gap:5px;">
+        <div style="width:32px;height:32px;position:relative;">
+          <div class="logo-symbol" style="width:100%;height:100%;">
+            <div class="fl"></div><div class="fr"></div>
+            <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+            <div class="diamond"><div class="diamond-inner"></div></div>
+            <div class="logo-border"></div>
+          </div>
+        </div>
+        <div class="wm"><span class="cine" style="font-size:6px;">CINE</span><span class="dna" style="font-size:7px;">DNA</span></div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Company Page Cover</div>
+      <div class="ad">1128 × 191px</div>
+      <div id="li-cover" class="cover" style="width:480px;height:81px;">
+        <div class="strip" style="left:8px;"></div>
+        <div class="strip" style="right:8px;"></div>
+        <div style="display:flex;align-items:center;gap:28px;padding:0 36px;width:100%;height:100%;">
+          <div style="width:52px;height:52px;position:relative;flex-shrink:0;">
+            <div class="logo-symbol" style="width:100%;height:100%;">
+              <div class="fl"></div><div class="fr"></div>
+              <div class="rungs"><div class="rung"></div><div class="rung"></div><div class="rung"></div><div class="rung"></div></div>
+              <div class="diamond"><div class="diamond-inner"></div></div>
+              <div class="logo-border"></div>
+            </div>
+          </div>
+          <div style="width:1px;height:36px;background:#2a2a2a;flex-shrink:0;"></div>
+          <div>
+            <div class="wm" style="margin-bottom:4px;"><span class="cine" style="font-size:14px;">CINE</span><span class="dna" style="font-size:15px;">DNA</span></div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:#555;">Film identity · Discovery · Recommendation</div>
+          </div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;gap:3px;text-align:right;">
+            <div style="font-family:'DM Mono',monospace;font-size:8px;color:#444;letter-spacing:.06em;text-transform:uppercase;">Ανακάλυψε το DNA σου</div>
+            <div style="font-family:'DM Mono',monospace;font-size:8px;color:#c4962a;letter-spacing:.04em;">cinedna-pi.vercel.app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw">
+      <div class="al">Post 1:1</div>
+      <div class="ad">1080 × 1080px</div>
+      <div id="li-post" class="post" style="width:200px;height:200px;">
+        <div class="strip" style="left:5px;"></div>
+        <div class="strip" style="right:5px;"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:24px;">
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#c4962a;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;">CINE · DNA</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:#e8dcc8;line-height:1.1;margin-bottom:10px;">AI-powered film discovery for people who actually care about cinema.</div>
+          <div style="height:1px;width:24px;background:rgba(196,150,42,.5);margin:8px 0;"></div>
+          <div style="font-family:'DM Mono',monospace;font-size:6px;color:#888;letter-spacing:.06em;text-transform:uppercase;line-height:1.6;">3 films → 12 DNA profiles<br>50 unique recommendations<br>0 scrolling</div>
+          <div style="position:absolute;bottom:14px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;">
+            <div class="wm"><span class="cine" style="font-size:7px;">CINE</span><span class="dna" style="font-size:8px;">DNA</span></div>
+            <div style="font-family:'DM Mono',monospace;font-size:6px;color:#333;">cinedna-pi.vercel.app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ SCRIPT ═══════════════════════════════════════════════════ -->
+<script>
+const ASSETS = {
+  // id: { name, w (target width), pw (preview width), h (target height), ph (preview height), circle }
+  'ig-profile-a':   { name:'ig-01-profile-a-symbol-320x320',     w:320,  pw:100, h:320,  ph:100,  circle:true  },
+  'ig-profile-b':   { name:'ig-02-profile-b-full-logo-320x320',  w:320,  pw:100, h:320,  ph:100,  circle:true  },
+  'ig-profile-c':   { name:'ig-03-profile-c-stacked-320x320',    w:320,  pw:100, h:320,  ph:100,  circle:true  },
+  'ig-profile-d':   { name:'ig-04-profile-d-horizontal-320x320', w:320,  pw:100, h:320,  ph:100,  circle:true  },
+  'ig-feed-dna':    { name:'ig-05-feed-dna-reveal-1080x1080',    w:1080, pw:240, h:1080, ph:240               },
+  'ig-feed-promo':  { name:'ig-06-feed-promo-1080x1080',         w:1080, pw:240, h:1080, ph:240               },
+  'ig-story':       { name:'ig-07-story-reel-cover-1080x1920',   w:1080, pw:135, h:1920, ph:240               },
+  'ig-hl-dna':      { name:'ig-08-highlight-dna-161x161',        w:161,  pw:56,  h:161,  ph:56,   circle:true  },
+  'ig-hl-picks':    { name:'ig-09-highlight-picks-161x161',      w:161,  pw:56,  h:161,  ph:56,   circle:true  },
+  'ig-hl-film':     { name:'ig-10-highlight-film-161x161',       w:161,  pw:56,  h:161,  ph:56,   circle:true  },
+  'ig-hl-how':      { name:'ig-11-highlight-how-161x161',        w:161,  pw:56,  h:161,  ph:56,   circle:true  },
+  'tt-profile-icon':{ name:'tt-01-profile-icon-200x200',         w:200,  pw:80,  h:200,  ph:80,   circle:true  },
+  'tt-profile-word':{ name:'tt-02-profile-wordmark-200x200',     w:200,  pw:80,  h:200,  ph:80,   circle:true  },
+  'tt-cover-promo': { name:'tt-03-video-cover-promo-1080x1920',  w:1080, pw:135, h:1920, ph:240               },
+  'tt-cover-dna':   { name:'tt-04-video-cover-dna-1080x1920',   w:1080, pw:135, h:1920, ph:240               },
+  'fb-profile-icon':{ name:'fb-01-profile-icon-170x170',         w:170,  pw:80,  h:170,  ph:80                },
+  'fb-profile-word':{ name:'fb-02-profile-wordmark-170x170',     w:170,  pw:80,  h:170,  ph:80                },
+  'fb-cover':       { name:'fb-03-cover-photo-851x315',          w:851,  pw:460, h:315,  ph:170               },
+  'li-logo-icon':   { name:'li-01-logo-icon-300x300',            w:300,  pw:80,  h:300,  ph:80                },
+  'li-logo-word':   { name:'li-02-logo-wordmark-300x300',        w:300,  pw:80,  h:300,  ph:80                },
+  'li-cover':       { name:'li-03-company-cover-1128x191',       w:1128, pw:480, h:191,  ph:81                },
+  'li-post':        { name:'li-04-post-1080x1080',               w:1080, pw:200, h:1080, ph:200               },
+};
+
+const ALL_IDS = Object.keys(ASSETS);
+let busy = false;
+
+document.fonts.ready.then(() => {
+  setStatus('Fonts loaded. Έτοιμο για export.');
+});
+
+// Wire up individual buttons
+document.querySelectorAll('.pb[data-id]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!busy) exportOne(btn.dataset.id);
+  });
+});
+
+// Export All
+document.getElementById('btn-all').addEventListener('click', exportAll);
+
+async function exportOne(id) {
+  const cfg = ASSETS[id];
+  const el = document.getElementById(id);
+  if (!cfg || !el) { setStatus('Element not found: ' + id, 'err'); return; }
+
+  const scale = cfg.w / cfg.pw;
+
+  // Remove border-radius for square export (social platforms handle cropping)
+  const origBR = el.style.borderRadius;
+  const origOF = el.style.overflow;
+  if (cfg.circle) {
+    el.style.borderRadius = '0';
+    el.style.overflow = 'hidden';
+  }
+  el.style.outline = '1px solid #c4962a';
+
+  setStatus(`Rendering "${cfg.name}"…`);
+
+  try {
+    await document.fonts.ready;
+
+    const canvas = await html2canvas(el, {
+      scale,
+      useCORS:         true,
+      allowTaint:      true,
+      backgroundColor: '#080808',
+      logging:         false,
+      width:           cfg.pw,
+      height:          cfg.ph,
+    });
+
+    // Trigger download
+    const a = document.createElement('a');
+    a.download = cfg.name + '.png';
+    a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Mark button done
+    const btn = document.querySelector(`.pb[data-id="${id}"]`);
+    if (btn) btn.classList.add('done');
+
+  } catch (err) {
+    setStatus('✗ Error on ' + id + ': ' + err.message, 'err');
+  } finally {
+    el.style.outline = '';
+    if (cfg.circle) {
+      el.style.borderRadius = origBR;
+      el.style.overflow = origOF;
+    }
+  }
+}
+
+async function exportAll() {
+  if (busy) return;
+  busy = true;
+  const btn = document.getElementById('btn-all');
+  btn.disabled = true;
+
+  const fill = document.getElementById('progress-fill');
+  let done = 0;
+
+  for (const id of ALL_IDS) {
+    setStatus(`(${done + 1}/${ALL_IDS.length}) Rendering ${ASSETS[id].name}…`);
+    fill.style.width = (done / ALL_IDS.length * 100) + '%';
+
+    await exportOne(id);
+    done++;
+
+    // Small delay so browser doesn't block multiple downloads
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  fill.style.width = '100%';
+  setStatus(`✓ Όλα (${ALL_IDS.length}) exported! Δες το Downloads φάκελο.`, 'ok');
+  btn.disabled = false;
+  busy = false;
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type || '';
+}
+</script>
+</body>
+</html>
