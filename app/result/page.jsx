@@ -23,7 +23,8 @@ function ResultPageInner() {
   const [historyIndex, setHistoryIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copied,       setCopied]       = useState(false);
+  const [downloading,  setDownloading]  = useState(false);
 
   const normalizeHistoryEntry = (entry = {}) => {
     const film = entry?.film || {};
@@ -79,6 +80,30 @@ function ResultPageInner() {
     if (!result?.dnaKey) return { name: result?.dnaName || "", desc: result?.dnaDesc || "" };
     return getDNAStrings(result.dnaKey, lang);
   }, [result?.dnaKey, result?.dnaName, result?.dnaDesc, lang]);
+
+  const handleDownloadCard = async () => {
+    if (downloading || !result?.dnaKey) return;
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams({ dna: result.dnaKey, lang });
+      if (result.film?.title) params.set("film", result.film.title);
+      const url = `/api/og/square?${params}`;
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `cinedna-${result.dnaKey}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // silently fail — user can screenshot
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleShare = async () => {
     const text = lang === "en"
@@ -554,6 +579,27 @@ function ResultPageInner() {
             {copied
               ? (lang === "en" ? "Copied!" : "Αντιγράφηκε!")
               : (lang === "en" ? "Share" : "Κοινοποίηση")}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadCard}
+            disabled={downloading}
+            className="btn-secondary"
+            style={{
+              borderRadius: "999px",
+              padding: "12px 18px",
+              cursor: downloading ? "wait" : "pointer",
+              fontFamily: "var(--font-label)",
+              fontSize: "12px",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              opacity: downloading ? 0.5 : 1,
+            }}
+          >
+            {downloading
+              ? "..."
+              : (lang === "en" ? "Download card" : "Αποθήκευση κάρτας")}
           </button>
         </div>
 
