@@ -179,8 +179,18 @@ export async function POST(request) {
         .sort((a, b) => b.score - a.score)
         .slice(0, 30);
 
-      // Phase 2: 5. Weighted random από top 30
-      picked = weightedRandomPick(top30);
+      // Phase 2b: Φιλτράρισμα top30 με ελάχιστο vote_average, χαλαρώνοντας
+      // το κατώφλι αν δεν απομείνουν αρκετές ταινίες (>= 5).
+      let voteFiltered = top30.filter((film) => (film.vote_average ?? 0) >= 7.5);
+      if (voteFiltered.length < 5) {
+        voteFiltered = top30.filter((film) => (film.vote_average ?? 0) >= 7.0);
+      }
+      if (voteFiltered.length < 5) {
+        voteFiltered = top30;
+      }
+
+      // Phase 2: 5. Weighted random από το φιλτραρισμένο top 30
+      picked = weightedRandomPick(voteFiltered);
     } catch (error) {
       Sentry.captureException(error);
       picked = null;
