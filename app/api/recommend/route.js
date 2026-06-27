@@ -159,14 +159,16 @@ export async function POST(request) {
     // weighted-random pick from the top scored candidates. Any failure in the
     // new TMDB calls falls back to the original pure-random pick below.
     let picked = null;
+    let signals = null;
+    let similarityMap = null;
     try {
       const inputFilmIds = identifiedFilms.map((f) => f.id).filter(Boolean);
 
       // Phase 2: 1. Πάρε signals από τις ταινίες εισόδου
-      const signals = await getInputFilmSignals(inputFilmIds);
+      signals = await getInputFilmSignals(inputFilmIds);
 
       // Phase 2: 2. Πάρε similarity pool (25%)
-      const similarityMap = await getSimilarFilms(inputFilmIds);
+      similarityMap = await getSimilarFilms(inputFilmIds);
 
       // Phase 2: 3. Score όλα τα candidates από το DNA pool
       const scored = available.map((film) => ({
@@ -222,12 +224,38 @@ export async function POST(request) {
       watchCountry: country,
     };
 
+    // Build human-readable match reasons from the same director/keyword/similarity
+    // signals used by the hybrid ranking, so the "why" text can reference what
+    // actually connected this pick to the user's input films.
+    const matchReasons = [];
+    if (full?.director && signals?.directors?.has(full.director)) {
+      matchReasons.push({ type: "director", director: full.director });
+    }
+    if (Array.isArray(full?.keywordIds) && signals?.keywordIds?.size) {
+      const sharedKeywordIds = full.keywordIds.filter((id) => signals.keywordIds.has(id));
+      if (sharedKeywordIds.length > 0) {
+        const keywords = sharedKeywordIds
+          .map((id) => signals.keywordNames?.get(id))
+          .filter(Boolean);
+        if (keywords.length > 0) matchReasons.push({ type: "keyword", keywords });
+      }
+    }
+    const similarEntry = similarityMap?.get(filmForResponse.id);
+    if (similarEntry?.sourceIds?.length) {
+      const sourceTitles = similarEntry.sourceIds
+        .map((id) => identifiedFilms.find((f) => f.id === id)?.title)
+        .filter(Boolean);
+      if (sourceTitles.length > 0) matchReasons.push({ type: "similar", films: sourceTitles });
+    }
+    filmForResponse.matchReasons = matchReasons;
+
     // Generate personalised why (uses TMDB data for uniqueness)
     filmForResponse.why = generateWhy(
       filmForResponse,
       dna,
       mood,
       lang,
+      matchReasons,
     );
 
     return NextResponse.json({
