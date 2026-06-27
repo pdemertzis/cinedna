@@ -2,7 +2,16 @@ import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import * as Sentry from "@sentry/nextjs";
 import { DNA_TYPES, computeDNA, getDNAStrings } from "@/lib/dna";
-import { searchFilm, getFilmById, buildCandidatePool, getWatchOptionsForCountry } from "@/lib/tmdb";
+import {
+  searchFilm,
+  getFilmById,
+  buildCandidatePool,
+  getWatchOptionsForCountry,
+  getInputFilmSignals,
+  getSimilarFilms,
+  scoreCandidate,
+  weightedRandomPick,
+} from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
 import { rateLimitRecommend } from "@/lib/rateLimit";
 
@@ -145,8 +154,42 @@ export async function POST(request) {
       );
     }
 
-    // Pick one at random from the pool
-    const picked = available[Math.floor(Math.random() * available.length)];
+    // Phase 2: Hybrid ranking — blend the DNA pool with director/keyword/decade
+    // signals from the input films plus a similarity pool (25% weight), then
+    // weighted-random pick from the top scored candidates. Any failure in the
+    // new TMDB calls falls back to the original pure-random pick below.
+    let picked = null;
+    try {
+      const inputFilmIds = identifiedFilms.map((f) => f.id).filter(Boolean);
+
+      // Phase 2: 1. Πάρε signals από τις ταινίες εισόδου
+      const signals = await getInputFilmSignals(inputFilmIds);
+
+      // Phase 2: 2. Πάρε similarity pool (25%)
+      const similarityMap = await getSimilarFilms(inputFilmIds);
+
+      // Phase 2: 3. Score όλα τα candidates από το DNA pool
+      const scored = available.map((film) => ({
+        ...film,
+        score: scoreCandidate(film, signals, similarityMap),
+      }));
+
+      // Phase 2: 4. Πάρε top 30 by score
+      const top30 = scored
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 30);
+
+      // Phase 2: 5. Weighted random από top 30
+      picked = weightedRandomPick(top30);
+    } catch (error) {
+      Sentry.captureException(error);
+      picked = null;
+    }
+
+    // Phase 2: fallback to pure random if hybrid ranking failed or produced nothing
+    if (!picked) {
+      picked = available[Math.floor(Math.random() * available.length)];
+    }
 
     // Fetch full details in user's language (getFilmById handles language fix)
     const full = picked.id ? await getFilmById(picked.id, lang) : null;
