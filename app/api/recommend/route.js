@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
+import * as Sentry from "@sentry/nextjs";
 import { DNA_TYPES, computeDNA, getDNAStrings } from "@/lib/dna";
 import { searchFilm, getFilmById, buildCandidatePool, getWatchOptionsForCountry } from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
 import { rateLimitRecommend } from "@/lib/rateLimit";
 
-// In-memory cache of candidate pools.
-// Key: `${dnaKey}_${yearFrom}_${yearTo}`
-// Lives only as long as server process. Resets on restart.
-const POOL_CACHE = new Map();
-const POOL_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours
+const POOL_TTL_SECONDS = 21600; // 6 hours
 
 function parseEraToRange(era) {
   switch (era) {
@@ -24,22 +22,57 @@ function parseEraToRange(era) {
 }
 
 function getPoolCacheKey(dnaKey, yearFrom, yearTo) {
-  return `${dnaKey}_${yearFrom || "any"}_${yearTo || "any"}`;
+  return `pool:${dnaKey}:${yearFrom || "any"}:${yearTo || "any"}`;
 }
 
-async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo) {
+// Only the fields the recommend flow actually reads from a pooled film are
+// cached — full TMDB film objects would bloat the KV store for no benefit,
+// since getFilmById is always called again for the picked film's full detail.
+function toMinimalFilm(film) {
+  return {
+    id: film.id,
+    title: film.title,
+    year: film.year,
+    poster_path: film.poster ? film.poster.replace("https://image.tmdb.org/t/p/w500", "") : null,
+  };
+}
+
+function fromMinimalFilm(entry) {
+  return {
+    id: entry.id,
+    title: entry.title,
+    year: entry.year,
+    poster: entry.poster_path ? `https://image.tmdb.org/t/p/w500${entry.poster_path}` : null,
+  };
+}
+
+async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era) {
   const cacheKey = getPoolCacheKey(dnaKey, yearFrom, yearTo);
-  const cached = POOL_CACHE.get(cacheKey);
-  if (cached && Date.now() - cached.builtAt < POOL_TTL_MS) {
-    return cached.pool;
+
+  try {
+    const cached = await kv.get(cacheKey);
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached.map(fromMinimalFilm);
+    }
+  } catch (error) {
+    // KV unavailable — fall through to a fresh build instead of failing the request.
+    Sentry.captureException(error);
   }
-  const pool = await buildCandidatePool(dna.tmdb_genres, yearFrom, yearTo, 10000);
-  POOL_CACHE.set(cacheKey, { pool, builtAt: Date.now() });
+
+  const pool = await buildCandidatePool(dna.tmdb_genres, yearFrom, yearTo, era);
+
+  try {
+    await kv.set(cacheKey, pool.map(toMinimalFilm), { ex: POOL_TTL_SECONDS });
+  } catch (error) {
+    // Caching is best-effort; the request still succeeds without it.
+    Sentry.captureException(error);
+  }
+
   return pool;
 }
 
 export async function POST(request) {
-  const { allowed } = rateLimitRecommend(request);
+  const { allowed } = await rateLimitRecommend(request);
   if (!allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a few minutes." },
@@ -99,8 +132,8 @@ export async function POST(request) {
     const dna = DNA_TYPES[dnaKey];
     const { yearFrom, yearTo } = parseEraToRange(era);
 
-    // Get or build 10,000-film pool (cached after first build)
-    const pool = await getOrBuildPool(dnaKey, dna, yearFrom, yearTo);
+    // Get or build the candidate pool (cached in KV after first build)
+    const pool = await getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era);
 
     // Filter out films user has already seen
     const available = pool.filter((f) => !alreadyGivenIds.has(f.id));

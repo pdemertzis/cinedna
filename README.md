@@ -34,6 +34,8 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site origin used for metadata, share links, and OG image watermarks (see `lib/siteUrl.js`). Falls back to `https://cinedna.site` if unset. Set this to `https://cinedna.site` in the Vercel Production environment. |
+| `KV_REST_API_URL` | REST endpoint for the Vercel KV store used to cache TMDB candidate pools (`lib/tmdb.js`) and rate-limit counters (`lib/rateLimit.js`). Provided automatically when a KV store is linked to the project. |
+| `KV_REST_API_TOKEN` | Auth token for the Vercel KV REST API, paired with `KV_REST_API_URL`. Provided automatically when a KV store is linked to the project. |
 
 ## Deploy on Vercel
 
