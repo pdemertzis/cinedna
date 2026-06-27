@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { DNA_TYPES, getDNAStrings } from "@/lib/dna";
 import TopBackButton from "@/components/TopBackButton";
 import { useLanguage } from "@/lib/LanguageContext";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export default function ResultPage() {
   return (
@@ -110,16 +111,17 @@ function ResultPageInner() {
       ? `My cinematic DNA is "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`
       : `Το κινηματογραφικό μου DNA είναι "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`;
     const ogParams = new URLSearchParams({ dna: result.dnaKey || "d", lang, film: result.film?.title || "" });
-    const url = `https://cinedna-pi.vercel.app?og=${ogParams.toString()}`;
+    // Use the env-driven site origin instead of the hardcoded preview domain.
+    const url = `${SITE_URL}?og=${ogParams.toString()}`;
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: "CineDNA", text, url: "https://cinedna-pi.vercel.app" });
+        await navigator.share({ title: "CineDNA", text, url: SITE_URL });
       } catch {
         // user cancelled — do nothing
       }
     } else {
-      await navigator.clipboard.writeText(`${text}\nhttps://cinedna-pi.vercel.app`);
+      await navigator.clipboard.writeText(`${text}\n${SITE_URL}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

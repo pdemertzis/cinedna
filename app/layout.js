@@ -4,6 +4,7 @@ import { LanguageProvider } from "@/lib/LanguageContext";
 import AppNavbar from "@/components/AppNavbar";
 import { Analytics } from "@vercel/analytics/react";
 import AppFooter from "@/components/AppFooter";
+import { SITE_URL } from "@/lib/siteUrl";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -18,13 +19,17 @@ const dmMono = DM_Mono({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://cinedna-pi.vercel.app"),
+  // Domain-agnostic base/canonical URL, sourced from NEXT_PUBLIC_SITE_URL.
+  metadataBase: new URL(SITE_URL),
   title: "CineDNA — Ανακάλυψε το κινηματογραφικό σου DNA",
   description: "Βάλε 3 ταινίες που αγαπάς και ανακάλυψε το κινηματογραφικό σου DNA. Προσωποποιημένες προτάσεις ταινιών που δεν θα έβρισκες μόνος σου.",
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
     title: "CineDNA — Ανακάλυψε το κινηματογραφικό σου DNA",
     description: "Βάλε 3 ταινίες που αγαπάς και ανακάλυψε το κινηματογραφικό σου DNA.",
-    url: "https://cinedna-pi.vercel.app",
+    url: SITE_URL,
     siteName: "CineDNA",
     locale: "el_GR",
     type: "website",

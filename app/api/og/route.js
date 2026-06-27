@@ -1,6 +1,10 @@
 import { ImageResponse } from "next/og";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export const runtime = "edge";
+
+// Bare hostname for the watermark label, derived from the env-driven site URL.
+const SITE_HOST = new URL(SITE_URL).host;
 
 const DNA_LABELS = {
   d:  { el: "Ονειρικός Εξερευνητής",   en: "Dreamy Explorer" },
@@ -99,7 +103,7 @@ export async function GET(request) {
           fontFamily: "monospace",
           display: "flex",
         }}>
-          cinedna-pi.vercel.app
+          {SITE_HOST}
         </div>
       </div>
     ),

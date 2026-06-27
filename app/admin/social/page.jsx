@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { SITE_URL } from "@/lib/siteUrl";
 
 const DNA_LIST = [
   { key: "d",  el: "Ονειρικός Εξερευνητής",   en: "Dreamy Explorer",         desc_el: "Αναζητάς το υπαινικτικό, το ονειρικό και το εσωτερικό ταξίδι της εικόνας.", desc_en: "You seek the suggestive, the dreamlike, and the inner journey of the image." },
@@ -17,7 +18,8 @@ const DNA_LIST = [
   { key: "ve", el: "Βιρτουόζος του Είδους",   en: "Genre Virtuoso",          desc_el: "Γνωρίζεις τους κανόνες κάθε είδους — και αγαπάς τους σκηνοθέτες που τους ανατρέπουν.", desc_en: "You know the rules of every genre — and love directors who subvert them." },
 ];
 
-const BASE = "https://cinedna-pi.vercel.app";
+// Use the env-driven site origin instead of the hardcoded preview domain.
+const BASE = SITE_URL;
 
 export default function AdminSocialPage() {
   const [secret,    setSecret]    = useState("");
