@@ -13,7 +13,7 @@ import {
   weightedRandomPick,
 } from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
-import { rateLimitRecommend } from "@/lib/rateLimit";
+import { rateLimit, getIdentifier } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 import { saveRecommendation, updateDnaType, addWatchedFilm } from "@/lib/supabase/db";
 
@@ -83,8 +83,8 @@ async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era) {
 }
 
 export async function POST(request) {
-  const { allowed } = await rateLimitRecommend(request);
-  if (!allowed) {
+  const { success } = await rateLimit(getIdentifier(request), { limit: 10, windowSeconds: 60 });
+  if (!success) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a few minutes." },
       { status: 429 }
