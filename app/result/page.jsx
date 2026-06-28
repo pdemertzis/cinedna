@@ -7,6 +7,7 @@ import { DNA_TYPES, getDNAStrings } from "@/lib/dna";
 import TopBackButton from "@/components/TopBackButton";
 import { useLanguage } from "@/lib/LanguageContext";
 import { SITE_URL } from "@/lib/siteUrl";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ResultPage() {
   return (
@@ -29,6 +30,10 @@ function ResultPageInner() {
   const [downloading,  setDownloading]  = useState(false);
   const [explainOpen,  setExplainOpen]  = useState(false);
   const [confidenceWidth, setConfidenceWidth] = useState(0);
+  const [user, setUser] = useState(null);
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [favouriteRowId, setFavouriteRowId] = useState(null);
+  const [showLoginTip, setShowLoginTip] = useState(false);
 
   const normalizeHistoryEntry = (entry = {}) => {
     const film = entry?.film || {};
@@ -97,6 +102,70 @@ function ResultPageInner() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-animate when the displayed result actually changes
   }, [result?.dnaConfidence, result?.dnaKey, result?.createdAt]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data?.session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  // Check favourite status for the currently displayed film whenever it
+  // changes or the user logs in/out.
+  useEffect(() => {
+    const filmId = result?.film?.id;
+    if (!user || !filmId) {
+      setIsFavourite(false);
+      setFavouriteRowId(null);
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("favourite_films")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("film_id", filmId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setIsFavourite(Boolean(data));
+        setFavouriteRowId(data?.id ?? null);
+      });
+  }, [user, result?.film?.id]);
+
+  const handleToggleFavourite = async () => {
+    if (!user) {
+      setShowLoginTip(true);
+      setTimeout(() => setShowLoginTip(false), 2500);
+      return;
+    }
+    const film = result?.film;
+    if (!film?.id) return;
+    const supabase = createClient();
+
+    if (isFavourite) {
+      await supabase.from("favourite_films").delete().eq("id", favouriteRowId);
+      setIsFavourite(false);
+      setFavouriteRowId(null);
+    } else {
+      const { data } = await supabase
+        .from("favourite_films")
+        .insert({
+          user_id: user.id,
+          film_id: film.id,
+          film_title: film.title,
+          film_poster: film.poster,
+          film_year: film.year,
+        })
+        .select("id")
+        .single();
+      setIsFavourite(true);
+      setFavouriteRowId(data?.id ?? null);
+    }
+  };
 
   const localisedDNA = useMemo(() => {
     if (!result?.dnaKey) return { name: result?.dnaName || "", desc: result?.dnaDesc || "" };
@@ -479,18 +548,61 @@ function ResultPageInner() {
               ) : null}
             </div>
             <div>
-              <h2
-                style={{
-                  marginTop: 0,
-                  marginBottom: "6px",
-                  fontSize: "32px",
-                  lineHeight: 1.1,
-                  fontFamily: "var(--font-cormorant), serif",
-                  fontStyle: "italic",
-                }}
-              >
-                {result.film?.title}
-              </h2>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: "6px",
+                    fontSize: "32px",
+                    lineHeight: 1.1,
+                    fontFamily: "var(--font-cormorant), serif",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {result.film?.title}
+                </h2>
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={handleToggleFavourite}
+                    aria-label={lang === "en" ? "Toggle favourite" : "Εναλλαγή αγαπημένου"}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "26px",
+                      lineHeight: 1,
+                      padding: "4px",
+                      color: isFavourite ? "#cf6c6c" : "var(--mu)",
+                      transition: "color 160ms ease, transform 160ms ease",
+                    }}
+                  >
+                    {isFavourite ? "❤️" : "♡"}
+                  </button>
+                  {showLoginTip && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        right: 0,
+                        marginTop: "6px",
+                        background: "var(--bk)",
+                        border: "1px solid var(--br)",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        color: "var(--cr)",
+                        fontFamily: "var(--font-dm-mono), monospace",
+                        fontSize: "11px",
+                        whiteSpace: "nowrap",
+                        zIndex: 10,
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      {t.login_to_favourite}
+                    </div>
+                  )}
+                </div>
+              </div>
               <div
                 style={{
                   color: "var(--mu)",
