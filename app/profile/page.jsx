@@ -27,23 +27,22 @@ export default function ProfilePage() {
   const { lang, t } = useLanguage();
   const [user, setUser] = useState(undefined); // undefined = loading, null = logged out
   const [tab, setTab] = useState("recommendations");
-  const [history, setHistory] = useState([]);
-
   // Anonymous localStorage history — shown for logged-out users, and used
-  // as the one-time migration source on first login.
-  useEffect(() => {
+  // as the one-time migration source on first login. Read lazily so this
+  // doesn't trigger a setState-in-effect render cascade.
+  const [history] = useState(() => {
+    if (typeof window === "undefined") return [];
     const savedHistory =
       localStorage.getItem("cinedna_history") ||
       localStorage.getItem("cinedna:history");
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-        setHistory(Array.isArray(parsed) ? parsed : []);
-      } catch {
-        setHistory([]);
-      }
+    if (!savedHistory) return [];
+    try {
+      const parsed = JSON.parse(savedHistory);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
     const supabase = createClient();
