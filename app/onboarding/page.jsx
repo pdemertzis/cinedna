@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { track } from "@vercel/analytics";
 import FilmInput from "@/components/FilmInput";
 import MoodCard from "@/components/MoodCard";
 import EraCard from "@/components/EraCard";
@@ -12,6 +13,10 @@ export default function OnboardingPage() {
   const { lang, t } = useLanguage();
   const router = useRouter();
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    track("onboarding_start");
+  }, []);
   const [films, setFilms] = useState(Array.from({ length: 5 }, () => ({ id: null, title: "" })));
   const [mood, setMood] = useState("");
   const [era, setEra] = useState("");
@@ -43,6 +48,7 @@ export default function OnboardingPage() {
   const runRecommendation = async () => {
     if (!canSubmit) return;
 
+    track("era_selected", { era });
     setStep(4);
     setLoading(true);
     setError("");
@@ -178,7 +184,10 @@ export default function OnboardingPage() {
             <button
               type="button"
               disabled={!canGoStep2}
-              onClick={() => goToStep(2)}
+              onClick={() => {
+                track("films_submitted", { count: selectedFilms.length });
+                goToStep(2);
+              }}
               className="btn-primary"
               style={{
                 marginTop: "24px",
@@ -217,7 +226,10 @@ export default function OnboardingPage() {
                   key={moodOption.id}
                   label={moodOption.label}
                   selected={mood === moodOption.id}
-                  onClick={() => setMood(moodOption.id)}
+                  onClick={() => {
+                    track("mood_selected", { mood: moodOption.id });
+                    setMood(moodOption.id);
+                  }}
                   description={moodOption.desc}
                 />
               ))}

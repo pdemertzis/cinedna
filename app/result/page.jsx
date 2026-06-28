@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { track } from "@vercel/analytics";
 import { DNA_TYPES, getDNAStrings } from "@/lib/dna";
 import TopBackButton from "@/components/TopBackButton";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -62,13 +63,18 @@ function ResultPageInner() {
 
       if (validIndexed) {
         setHistoryIndex(parsedIndex);
-        setResult(normalizeHistoryEntry(historyArray[parsedIndex]));
+        const entry = normalizeHistoryEntry(historyArray[parsedIndex]);
+        setResult(entry);
+        track("result_viewed", { dnaKey: entry.dnaKey });
       } else if (parsedLast) {
         setHistoryIndex(null);
         setResult(parsedLast);
+        track("result_viewed", { dnaKey: parsedLast?.dnaKey });
       } else if (historyArray.length > 0) {
         setHistoryIndex(0);
-        setResult(normalizeHistoryEntry(historyArray[0]));
+        const entry = normalizeHistoryEntry(historyArray[0]);
+        setResult(entry);
+        track("result_viewed", { dnaKey: entry.dnaKey });
       } else {
         router.replace("/onboarding");
       }
@@ -84,6 +90,7 @@ function ResultPageInner() {
 
   const handleDownloadCard = async () => {
     if (downloading || !result?.dnaKey) return;
+    track("share_clicked", { dnaKey: result.dnaKey, method: "download" });
     setDownloading(true);
     try {
       const params = new URLSearchParams({ dna: result.dnaKey, lang });
@@ -107,6 +114,7 @@ function ResultPageInner() {
   };
 
   const handleShare = async () => {
+    track("share_clicked", { dnaKey: result?.dnaKey });
     const text = lang === "en"
       ? `My cinematic DNA is "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`
       : `Το κινηματογραφικό μου DNA είναι "${localisedDNA.name}" — ${result.film?.title} (${result.film?.year})`;
@@ -130,6 +138,7 @@ function ResultPageInner() {
   const rerollRecommendation = async () => {
     if (!result || historyIndex !== null) return;
 
+    track("reroll_clicked", { dnaKey: result?.dnaKey });
     const currentHistory = JSON.parse(
       localStorage.getItem("cinedna_history") ||
       localStorage.getItem("cinedna:history") ||
