@@ -1,15 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/LanguageContext";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { lang, setLang, t } = useLanguage();
   const [logoFailed, setLogoFailed] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data?.session?.user ?? null);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   const isResultOrProfile = pathname === "/result" || pathname === "/profile";
 
@@ -153,6 +175,83 @@ export default function AppNavbar() {
               </button>
             </>
           ) : null}
+
+          {user ? (
+            <>
+              <div
+                title={user.email || ""}
+                style={{
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "999px",
+                  background: "var(--gold-bg)",
+                  border: "1px solid var(--go)",
+                  color: "var(--gl)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "var(--font-dm-mono), monospace",
+                  fontSize: "12px",
+                  textTransform: "uppercase",
+                  flexShrink: 0,
+                }}
+              >
+                {(user.email || "?").charAt(0)}
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/profile")}
+                className="btn-secondary"
+                style={{
+                  borderRadius: "999px",
+                  padding: "7px 12px",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-label)",
+                  fontSize: "12px",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                }}
+              >
+                {t.profile_link}
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn-secondary"
+                style={{
+                  borderRadius: "999px",
+                  padding: "7px 12px",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-label)",
+                  fontSize: "12px",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                }}
+              >
+                {t.logout}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.push("/auth")}
+              className="btn-primary"
+              style={{
+                borderRadius: "999px",
+                padding: "7px 12px",
+                cursor: "pointer",
+                fontFamily: "var(--font-label)",
+                fontSize: "12px",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {t.login}
+            </button>
+          )}
         </div>
       </div>
     </header>
