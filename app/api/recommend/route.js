@@ -13,6 +13,7 @@ import {
   weightedRandomPick,
 } from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
+import filmDescriptions from "@/lib/film-descriptions.json";
 import { rateLimit, getIdentifier } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 import { saveRecommendation, updateDnaType, addWatchedFilm } from "@/lib/supabase/db";
@@ -258,14 +259,22 @@ export async function POST(request) {
     }
     filmForResponse.matchReasons = matchReasons;
 
+    // Check curated descriptions first (keyed by TMDB film ID as string).
+    // These are hand-written in Greek, so the fallback applies for English
+    // requests and for any film without a curated entry.
+    const curatedDescription =
+      lang === "el" ? filmDescriptions[String(filmForResponse.id)] : null;
+
     // Generate personalised why (uses TMDB data for uniqueness)
-    filmForResponse.why = generateWhy(
-      filmForResponse,
-      dna,
-      mood,
-      lang,
-      matchReasons,
-    );
+    filmForResponse.why = curatedDescription
+      ? curatedDescription
+      : generateWhy(
+          filmForResponse,
+          dna,
+          mood,
+          lang,
+          matchReasons,
+        );
 
     // Logged-in users get their recommendation saved server-side; anonymous
     // users keep working entirely off localStorage, so failures here must
