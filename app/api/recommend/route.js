@@ -157,6 +157,13 @@ export async function POST(request) {
     const pool = await getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era);
 
     // Filter out films user has already seen
+    if (pool.length === 0) {
+      return NextResponse.json(
+        { error: "No films found for this DNA type right now. Please try again." },
+        { status: 404 }
+      );
+    }
+
     const available = pool.filter((f) => !alreadyGivenIds.has(f.id));
 
     if (available.length === 0) {
