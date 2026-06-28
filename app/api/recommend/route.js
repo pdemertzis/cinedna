@@ -127,15 +127,22 @@ export async function POST(request) {
       ...excludeIds,
     ]);
 
-    // Compute or reuse DNA
+    // Compute or reuse DNA. When a DNA is locked (reroll), there is no fresh
+    // computation, so confidence/secondary fall back to a single-archetype result.
     let dnaKey = lockedDnaKey;
+    let dnaSecondary = null;
+    let dnaConfidence = 100;
     if (!dnaKey) {
       const dnaResult = await computeDNA(
         identifiedFilms.map((f) => f.title),
         mood,
         era,
       );
-      dnaKey = dnaResult.dnaKey;
+      dnaKey = dnaResult.primary.key;
+      dnaSecondary = dnaResult.secondary
+        ? { key: dnaResult.secondary.key, name_el: dnaResult.secondary.name_el, name_en: dnaResult.secondary.name_en }
+        : null;
+      dnaConfidence = dnaResult.confidence;
     }
 
     const dna = DNA_TYPES[dnaKey];
@@ -262,6 +269,9 @@ export async function POST(request) {
       dnaKey,
       dnaName,
       dnaDesc,
+      dnaSecondary,
+      dnaConfidence,
+      dnaExplanation: { el: dna.explanation_el, en: dna.explanation_en },
       film: filmForResponse,
       poolSize: pool.length,
       availableCount: available.length,

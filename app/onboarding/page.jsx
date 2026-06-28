@@ -88,6 +88,8 @@ export default function OnboardingPage() {
         dnaKey: data.dnaKey,
         dnaName: data.dnaName,
         dnaDesc: data.dnaDesc,
+        dnaSecondary: data?.dnaSecondary || null,
+        dnaConfidence: data?.dnaConfidence ?? 100,
         mood,
         era,
         why: data?.film?.why || "",

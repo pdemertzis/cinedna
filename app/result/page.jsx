@@ -27,6 +27,8 @@ function ResultPageInner() {
   const [error, setError] = useState("");
   const [copied,       setCopied]       = useState(false);
   const [downloading,  setDownloading]  = useState(false);
+  const [explainOpen,  setExplainOpen]  = useState(false);
+  const [confidenceWidth, setConfidenceWidth] = useState(0);
 
   const normalizeHistoryEntry = (entry = {}) => {
     const film = entry?.film || {};
@@ -35,6 +37,8 @@ function ResultPageInner() {
       dnaKey: entry?.dnaKey || "",
       dnaName: entry?.dnaName || entry?.dnaType || "",
       dnaDesc: entry?.dnaDesc || "",
+      dnaSecondary: entry?.dnaSecondary || null,
+      dnaConfidence: entry?.dnaConfidence ?? 100,
       mood: entry?.mood || "",
       era: entry?.era || t.eras[0],
       inputFilms: Array.isArray(entry?.inputFilms) ? entry.inputFilms : [],
@@ -82,6 +86,17 @@ function ResultPageInner() {
       router.replace("/onboarding");
     }
   }, [router, searchParams]);
+
+  // Animate the confidence bar fill from 0 to the target on each new result.
+  useEffect(() => {
+    if (!result) return;
+    setConfidenceWidth(0);
+    const timer = setTimeout(() => {
+      setConfidenceWidth(result.dnaConfidence ?? 100);
+    }, 50);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-animate when the displayed result actually changes
+  }, [result?.dnaConfidence, result?.dnaKey, result?.createdAt]);
 
   const localisedDNA = useMemo(() => {
     if (!result?.dnaKey) return { name: result?.dnaName || "", desc: result?.dnaDesc || "" };
@@ -195,6 +210,8 @@ function ResultPageInner() {
         dnaKey: result.dnaKey,
         dnaName: result.dnaName,
         dnaDesc: result.dnaDesc,
+        dnaSecondary: data?.dnaSecondary || null,
+        dnaConfidence: data?.dnaConfidence ?? 100,
         mood: payload.mood,
         era: payload.era,
         why: data?.film?.why || "",
@@ -308,6 +325,110 @@ function ResultPageInner() {
         >
           {localisedDNA.name}
         </h1>
+
+        {/* SECONDARY DNA — shown only when a runner-up archetype scored above zero */}
+        {result.dnaSecondary && (
+          <div
+            style={{
+              marginTop: "6px",
+              color: "var(--mu)",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "12px",
+              letterSpacing: "0.03em",
+            }}
+          >
+            {lang === "en"
+              ? `with elements of ${result.dnaSecondary.name_en}`
+              : `με στοιχεία ${result.dnaSecondary.name_el}`}
+          </div>
+        )}
+
+        {/* CONFIDENCE BAR */}
+        <div style={{ marginTop: "16px", maxWidth: "320px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "6px",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "11px",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: "var(--go)",
+            }}
+          >
+            <span>{lang === "en" ? "Match" : "Ταύτιση"}</span>
+            <span>{result.dnaConfidence ?? 100}%</span>
+          </div>
+          <div
+            style={{
+              height: "2px",
+              width: "100%",
+              background: "var(--bk)",
+              border: "1px solid var(--gold-nav-border)",
+              borderRadius: "2px",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${confidenceWidth}%`,
+                background: "linear-gradient(90deg, var(--gold), var(--gold-light))",
+                transition: "width 900ms ease",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* EXPANDABLE EXPLANATION */}
+        <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--br)" }}>
+          <button
+            type="button"
+            onClick={() => setExplainOpen((open) => !open)}
+            style={{
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "var(--mu)",
+              fontFamily: "var(--font-dm-mono), monospace",
+              fontSize: "12px",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+          >
+            <span>{lang === "en" ? "Why this DNA?" : "Γιατί αυτό το DNA;"}</span>
+            <span
+              style={{
+                display: "inline-block",
+                transform: explainOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 200ms ease",
+              }}
+            >
+              ↓
+            </span>
+          </button>
+          {explainOpen && (
+            <p
+              style={{
+                marginTop: "12px",
+                marginBottom: 0,
+                color: "var(--mu)",
+                fontFamily: "var(--font-cormorant), serif",
+                fontStyle: "italic",
+                fontSize: "16px",
+                lineHeight: 1.6,
+                maxWidth: "60ch",
+              }}
+            >
+              {lang === "en" ? dna?.explanation_en : dna?.explanation_el}
+            </p>
+          )}
+        </div>
 
         <p
           style={{
