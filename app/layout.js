@@ -25,6 +25,10 @@ export const metadata = {
   description: "Βάλε 3 ταινίες που αγαπάς και ανακάλυψε το κινηματογραφικό σου DNA. Προσωποποιημένες προτάσεις ταινιών που δεν θα έβρισκες μόνος σου.",
   alternates: {
     canonical: SITE_URL,
+    languages: {
+      el: SITE_URL,
+      en: `${SITE_URL}?lang=en`,
+    },
   },
   openGraph: {
     title: "CineDNA — Ανακάλυψε το κινηματογραφικό σου DNA",
@@ -41,10 +45,23 @@ export const metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "CineDNA",
+  url: SITE_URL,
+  applicationCategory: "EntertainmentApplication",
+  inLanguage: ["el", "en"],
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="el" className={`${cormorant.variable} ${dmMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <LanguageProvider>
           <AppNavbar />
           <div style={{ paddingTop: "56px", minHeight: "100vh" }}>{children}</div>
