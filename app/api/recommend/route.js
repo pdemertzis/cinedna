@@ -15,6 +15,7 @@ import {
 import { generateWhy } from "@/lib/hemingway";
 import { rateLimitRecommend } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
+import { saveRecommendation, updateDnaType, addWatchedFilm } from "@/lib/supabase/db";
 
 const POOL_TTL_SECONDS = 21600; // 6 hours
 
@@ -273,15 +274,20 @@ export async function POST(request) {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("recommendations").insert({
-          user_id: user.id,
-          film_id: filmForResponse.id,
-          film_title: filmForResponse.title,
-          film_poster: filmForResponse.poster,
-          film_year: filmForResponse.year,
-          dna_type: dnaKey,
-          why_text: filmForResponse.why,
+        await saveRecommendation(supabase, {
+          filmId: filmForResponse.id,
+          filmTitle: filmForResponse.title,
+          filmPoster: filmForResponse.poster,
+          filmYear: filmForResponse.year,
+          dnaType: dnaKey,
+          whyText: filmForResponse.why,
         });
+        await updateDnaType(supabase, dnaKey);
+        await Promise.all(
+          identifiedFilms.map((f) =>
+            addWatchedFilm(supabase, { filmId: f.id, filmTitle: f.title, filmPoster: f.poster, filmYear: f.year })
+          )
+        );
       }
     } catch (error) {
       Sentry.captureException(error);
