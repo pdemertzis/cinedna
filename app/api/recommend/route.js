@@ -14,6 +14,7 @@ import {
 } from "@/lib/tmdb";
 import { generateWhy } from "@/lib/hemingway";
 import { rateLimitRecommend } from "@/lib/rateLimit";
+import { createClient } from "@/lib/supabase/server";
 
 const POOL_TTL_SECONDS = 21600; // 6 hours
 
@@ -264,6 +265,27 @@ export async function POST(request) {
       lang,
       matchReasons,
     );
+
+    // Logged-in users get their recommendation saved server-side; anonymous
+    // users keep working entirely off localStorage, so failures here must
+    // never affect the response.
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("recommendations").insert({
+          user_id: user.id,
+          film_id: filmForResponse.id,
+          film_title: filmForResponse.title,
+          film_poster: filmForResponse.poster,
+          film_year: filmForResponse.year,
+          dna_type: dnaKey,
+          why_text: filmForResponse.why,
+        });
+      }
+    } catch (error) {
+      Sentry.captureException(error);
+    }
 
     return NextResponse.json({
       dnaKey,
