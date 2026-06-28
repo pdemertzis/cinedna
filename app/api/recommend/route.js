@@ -68,6 +68,7 @@ async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era) {
     }
   } catch (error) {
     // KV unavailable — fall through to a fresh build instead of failing the request.
+    console.error("recommend: kv.get failed, continuing without cache:", error);
     Sentry.captureException(error);
   }
 
@@ -77,6 +78,7 @@ async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era) {
     await kv.set(cacheKey, pool.map(toMinimalFilm), { ex: POOL_TTL_SECONDS });
   } catch (error) {
     // Caching is best-effort; the request still succeeds without it.
+    console.error("recommend: kv.set failed, continuing without cache:", error);
     Sentry.captureException(error);
   }
 
@@ -314,8 +316,10 @@ export async function POST(request) {
       availableCount: available.length,
     });
   } catch (error) {
+    console.error("recommend error:", error);
+    Sentry.captureException(error);
     return NextResponse.json(
-      { error: error?.message || "Unexpected server error." },
+      { error: "Προέκυψε σφάλμα. Παρακαλώ δοκίμασε ξανά." },
       { status: 500 }
     );
   }
