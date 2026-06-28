@@ -1,4 +1,5 @@
 import { postToAll } from "@/lib/social";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request) {
   try {
@@ -8,6 +9,15 @@ export async function POST(request) {
     // Auth
     if (!secret || secret !== process.env.ADMIN_SECRET) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const identifier = "social-post-admin";
+    const { success } = await rateLimit(identifier, { limit: 5, windowSeconds: 3600 });
+    if (!success) {
+      return Response.json(
+        { error: "Rate limit exceeded. Maximum 5 social posts per hour." },
+        { status: 429 }
+      );
     }
 
     if (!dnaKey || !dnaName) {
