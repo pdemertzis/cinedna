@@ -6,9 +6,10 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { SITE_URL } from "@/lib/siteUrl";
 import TopBackButton from "@/components/TopBackButton";
+import GdprNotice from "@/components/GdprNotice";
 
 export default function AuthPage() {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,6 +84,8 @@ export default function AuthPage() {
         >
           {t.auth_subtitle}
         </p>
+
+        <GdprNotice lang={lang} />
 
         <button type="button" onClick={handleGoogleSignIn} className="auth-google-btn">
           <GoogleIcon />
