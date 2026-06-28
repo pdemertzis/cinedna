@@ -25,7 +25,7 @@ function toPosterUrl(path) {
 }
 
 export async function GET(request) {
-  const { success } = await rateLimit(getIdentifier(request), { limit: 30, windowSeconds: 60 });
+  const { success } = await rateLimit(getIdentifier(request), { limit: 120, windowSeconds: 60 });
   if (!success) {
     return NextResponse.json(
       { error: "Too many requests." },

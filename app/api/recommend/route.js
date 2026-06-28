@@ -84,7 +84,7 @@ async function getOrBuildPool(dnaKey, dna, yearFrom, yearTo, era) {
 }
 
 export async function POST(request) {
-  const { success } = await rateLimit(getIdentifier(request), { limit: 10, windowSeconds: 60 });
+  const { success } = await rateLimit(getIdentifier(request), { limit: 60, windowSeconds: 60 });
   if (!success) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a few minutes." },
